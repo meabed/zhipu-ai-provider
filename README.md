@@ -1,53 +1,66 @@
-# Zhipu AI Provider - Vercel AI SDK Community Provider
+# zhipu-ai-sdk-provider
 
-This is a [Zhipu](https://www.zhipuai.cn/) provider for the [AI SDK](https://sdk.vercel.ai/). It enables seamless integration with **GLM** and Embedding Models provided on [bigmodel.cn](https://bigmodel.cn/).
+[Zhipu AI](https://www.zhipuai.cn/) provider for the [Vercel AI SDK](https://sdk.vercel.ai/). Integrates **GLM** language models, embedding models, and image generation models from [bigmodel.cn](https://bigmodel.cn/).
 
-## Setup
+[![npm version](https://img.shields.io/npm/v/zhipu-ai-sdk-provider.svg)](https://www.npmjs.com/package/zhipu-ai-sdk-provider)
+[![license](https://img.shields.io/npm/l/zhipu-ai-sdk-provider.svg)](https://github.com/meabed/zhipu-ai-provider/blob/master/LICENSE.md)
 
-```bash
-# npm
-npm i zhipu-ai-sdk-provider
-
-# pnpm
-pnpm add zhipu-ai-sdk-provider
-
-# yarn
-yarn add zhipu-ai-sdk-provider
-```
-
-Set up your `.env` file / environment with your API key.
+## Installation
 
 ```bash
-ZHIPU_API_KEY=<your-api-key>
+npm install zhipu-ai-sdk-provider ai
 ```
 
-## Provider Instance
+## Configuration
 
-You can import the default provider instance `zhipu` from `zhipu-ai-sdk-provider` (This automatically reads the API key from the environment variable `ZHIPU_API_KEY`):
+Set your API key from [bigmodel.cn](https://bigmodel.cn/):
+
+```bash
+export ZHIPU_API_KEY=your-api-key
+```
+
+## Quick Start
+
+```ts
+import { generateText } from "ai";
+import { zhipu } from "zhipu-ai-sdk-provider";
+
+const { text } = await generateText({
+  model: zhipu("glm-4.7"),
+  prompt: "Why is the sky blue?",
+});
+
+console.log(text);
+```
+
+## Provider Setup
+
+**Default instance** — reads `ZHIPU_API_KEY` from environment:
 
 ```ts
 import { zhipu } from "zhipu-ai-sdk-provider";
 ```
 
-Alternatively, you can create a provider instance with custom configuration with `createZhipu`:
+**Custom instance** — pass your own config:
 
 ```ts
 import { createZhipu } from "zhipu-ai-sdk-provider";
 
 const zhipu = createZhipu({
-  baseURL: "https://open.bigmodel.cn/api/paas/v4",
   apiKey: "your-api-key",
+  baseURL: "https://open.bigmodel.cn/api/paas/v4", // default
+  headers: { "X-Custom": "value" }, // optional
 });
 ```
 
-You can use the following optional settings to customize the Zhipu provider instance:
+### Settings
 
-- **baseURL**: _string_
-  - Use a different URL prefix for API calls, e.g. to use proxy servers. The default prefix is `https://open.bigmodel.cn/api/paas/v4`.
-- **apiKey**: _string_
-  - Your API key for Zhipu [BigModel Platform](https://bigmodel.cn/). If not provided, the provider will attempt to read the API key from the environment variable `ZHIPU_API_KEY`.
-- **headers**: _Record<string,string>_
-  - Custom headers to include in the requests.
+| Option | Type | Description |
+| --- | --- | --- |
+| `apiKey` | `string` | API key. Defaults to `ZHIPU_API_KEY` env var. |
+| `baseURL` | `string` | API base URL. Defaults to `https://open.bigmodel.cn/api/paas/v4`. |
+| `headers` | `Record<string, string>` | Custom headers to include in requests. |
+| `fetch` | `FetchFunction` | Custom fetch implementation (e.g. for testing or proxying). |
 
 ## Supported Models
 
@@ -55,28 +68,38 @@ You can use the following optional settings to customize the Zhipu provider inst
 
 | Model | Description |
 | --- | --- |
-| `glm-5` | Latest flagship model, designed for agent applications |
-| `glm-4.7` | High-performance model with thinking support |
+| `glm-5` | Latest flagship, designed for agent applications |
+| `glm-4.7` | High-performance with deep thinking |
 | `glm-4.7-flash` | Fast variant of GLM-4.7 |
 | `glm-4.7-flashx` | Extended fast variant of GLM-4.7 |
-| `glm-4.6` | Previous generation flagship |
-| `glm-4.5` | GLM-4.5 series with thinking support |
+| `glm-4.6` | Previous-gen flagship, supports `tool_stream` |
+| `glm-4.5` | GLM-4.5 with thinking support |
 | `glm-4.5-air` | Lightweight GLM-4.5 |
 | `glm-4.5-x` | Extended GLM-4.5 |
 | `glm-4.5-airx` | Extended lightweight GLM-4.5 |
 | `glm-4.5-flash` | Fast GLM-4.5 |
 | `glm-4-plus` | Enhanced GLM-4 |
+| `glm-4-air` | Lightweight GLM-4 |
+| `glm-4-air-250414` | GLM-4-air dated snapshot |
+| `glm-4-airx` | Extended lightweight GLM-4 |
+| `glm-4-long` | Long-context GLM-4 |
 | `glm-4-flash` | Fast GLM-4 |
-| `glm-4-32b-0414-128k` | 32B parameter model with 128K context |
+| `glm-4-flash-250414` | GLM-4-flash dated snapshot |
+| `glm-4-flashx` | Extended fast GLM-4 |
+| `glm-4-32b-0414-128k` | Open-source 32B model, 128K context |
 
 ### Vision Models
 
 | Model | Description |
 | --- | --- |
-| `glm-4v-plus-0111` | Enhanced vision model |
-| `glm-4v-plus` | Vision model |
-| `glm-4v` | Standard vision model |
-| `glm-4v-flash` | Fast vision model |
+| `glm-4.6v` | GLM-4.6 vision model |
+| `glm-4.6v-flash` | Fast GLM-4.6 vision |
+| `glm-4.6v-flashx` | Extended fast GLM-4.6 vision |
+| `glm-4.5v` | GLM-4.5 vision model |
+| `glm-4v-plus-0111` | Enhanced GLM-4 vision |
+| `glm-4v-plus` | GLM-4 vision |
+| `glm-4v` | Standard GLM-4 vision |
+| `glm-4v-flash` | Fast GLM-4 vision |
 
 ### Reasoning Models
 
@@ -85,135 +108,263 @@ You can use the following optional settings to customize the Zhipu provider inst
 | `glm-z1-air` | Lightweight reasoning model |
 | `glm-z1-airx` | Extended reasoning model |
 | `glm-z1-flash` | Fast reasoning model |
-| `glm-4.1v-thinking-flash` | Vision reasoning model |
-| `glm-4.1v-thinking-flashx` | Extended vision reasoning model |
+| `glm-4.1v-thinking-flash` | Vision + reasoning |
+| `glm-4.1v-thinking-flashx` | Extended vision + reasoning |
 
 ### Embedding Models
 
 | Model | Description |
 | --- | --- |
-| `embedding-2` | Standard embedding model |
 | `embedding-3` | Latest embedding model (recommended) |
+| `embedding-2` | Standard embedding model |
 
 ### Image Generation Models
 
 | Model | Description |
 | --- | --- |
-| `cogview-3-flash` | Fast image generation |
+| `cogview-4-250304` | Latest CogView 4, supports `quality: "hd"` |
 | `cogview-4` | Standard CogView 4 |
-| `cogview-4-250304` | Latest CogView 4 with quality options |
+| `cogview-3-flash` | Fast image generation |
 
-## Language Model Example
+## Usage
+
+### Text Generation
 
 ```ts
 import { generateText } from "ai";
 import { zhipu } from "zhipu-ai-sdk-provider";
 
 const { text } = await generateText({
-  model: zhipu("glm-5"),
-  prompt: "Why is the sky blue?",
+  model: zhipu("glm-4.7"),
+  prompt: "Explain quantum computing in simple terms.",
 });
-
-console.log(text);
 ```
 
-## Thinking / Reasoning Mode
-
-GLM-4.5+ and GLM-4.7+ models support thinking mode for complex reasoning tasks. When enabled, the model performs deep reasoning before responding.
+### Streaming
 
 ```ts
+import { streamText } from "ai";
+import { zhipu } from "zhipu-ai-sdk-provider";
+
+const result = streamText({
+  model: zhipu("glm-4.7"),
+  prompt: "Write a short story about a robot.",
+});
+
+for await (const chunk of result.textStream) {
+  process.stdout.write(chunk);
+}
+```
+
+### Thinking / Reasoning Mode
+
+GLM-5 and GLM-4.7 models have thinking enabled by default. You can control this via model settings:
+
+```ts
+// Enable with preserved thinking (retains reasoning across turns)
 const { text } = await generateText({
   model: zhipu("glm-4.7", {
     thinking: {
       type: "enabled",
+      clearThinking: false, // preserve reasoning context across turns
     },
   }),
-  prompt: "Solve this step by step: What is 23 * 47?",
+  prompt: "Solve step by step: What is 23 * 47?",
 });
 ```
 
-To disable thinking:
-
 ```ts
+// Disable thinking for faster responses
 const { text } = await generateText({
   model: zhipu("glm-4.7", {
-    thinking: {
-      type: "disabled",
-    },
+    thinking: { type: "disabled" },
   }),
-  prompt: "Explain quantum computing in simple terms.",
+  prompt: "What is 2 + 2?",
 });
 ```
 
-You can also configure thinking via `providerOptions` using the `zhipuOptions` helper:
+You can also configure thinking at call time with `zhipuOptions`:
 
 ```ts
+import { generateText } from "ai";
 import { zhipu, zhipuOptions } from "zhipu-ai-sdk-provider";
 
 const { text } = await generateText({
   model: zhipu("glm-4.7"),
-  prompt: "Explain quantum computing in simple terms.",
+  prompt: "Solve this complex math problem.",
   providerOptions: zhipuOptions({
-    thinking: {
-      type: "disabled",
-    },
+    thinking: { type: "enabled", clear_thinking: false },
   }),
 });
 ```
 
-## Embedding Example
+### Provider Options (`zhipuOptions`)
+
+Use `zhipuOptions` to pass Zhipu-specific API parameters at call time. This is type-safe and avoids the standard SDK nesting under a provider key:
 
 ```ts
-import { embed } from "ai";
+import { generateText } from "ai";
+import { zhipu, zhipuOptions } from "zhipu-ai-sdk-provider";
+
+const { text } = await generateText({
+  model: zhipu("glm-4.7"),
+  prompt: "Hello!",
+  providerOptions: zhipuOptions({
+    temperature: 0.7,
+    top_p: 0.9,
+    max_tokens: 4096,
+    do_sample: true,
+  }),
+});
+```
+
+#### Available Options
+
+| Option | Type | Description |
+| --- | --- | --- |
+| `temperature` | `number` | Controls randomness. Lower = more deterministic. |
+| `top_p` | `number` | Nucleus sampling threshold. |
+| `max_tokens` | `number` | Maximum tokens to generate. |
+| `do_sample` | `boolean` | `false` = greedy decoding (ignores temperature/top_p). |
+| `thinking` | `object` | `{ type: "enabled" \| "disabled", clear_thinking?: boolean }` |
+| `stop` | `string[]` | Stop sequences (max 1 supported). |
+| `user_id` | `string` | End user ID for abuse detection (6–128 chars). |
+| `request_id` | `string` | Unique request ID. |
+| `tool_stream` | `boolean` | Enable streaming tool calls (GLM-4.6). |
+
+### Tool Calling
+
+```ts
+import { generateText, tool } from "ai";
+import { zhipu } from "zhipu-ai-sdk-provider";
+import { z } from "zod";
+
+const { text, toolResults } = await generateText({
+  model: zhipu("glm-4.7"),
+  prompt: "What is the weather in Beijing?",
+  tools: {
+    getWeather: tool({
+      description: "Get weather for a city",
+      parameters: z.object({ city: z.string() }),
+      execute: async ({ city }) => `Sunny, 25°C in ${city}`,
+    }),
+  },
+});
+```
+
+### Vision
+
+```ts
+import { generateText } from "ai";
 import { zhipu } from "zhipu-ai-sdk-provider";
 
+const { text } = await generateText({
+  model: zhipu("glm-4.6v"),
+  messages: [
+    {
+      role: "user",
+      content: [
+        { type: "text", text: "What do you see?" },
+        { type: "image", image: new URL("https://example.com/photo.jpg") },
+      ],
+    },
+  ],
+});
+```
+
+### Embeddings
+
+```ts
+import { embed, embedMany } from "ai";
+import { zhipu } from "zhipu-ai-sdk-provider";
+
+// Single embedding
 const { embedding } = await embed({
-  model: zhipu.embeddingModel("embedding-3", {
-    dimensions: 256, // Optional, defaults to 2048
-  }),
+  model: zhipu.embeddingModel("embedding-3"),
   value: "Hello, world!",
 });
 
-console.log(embedding);
-```
-
-## Image Generation Example
-
-Zhipu supports image generation with the `cogview` models, but the API does not return images in base64 or buffer format, so the image URLs are returned in the `providerMetadata` field.
-
-```ts
-import { experimental_generateImage as generateImage } from "ai";
-import { zhipu, zhipuImageOptions } from "zhipu-ai-sdk-provider";
-
-const { image, providerMetadata } = await generateImage({
-  model: zhipu.imageModel("cogview-4-250304"),
-  prompt: "A beautiful landscape with mountains and a river",
-  size: "1024x1024", // optional
-  providerOptions: zhipuImageOptions({ quality: "hd" }), // optional
+// With custom dimensions
+const { embedding: smallEmbedding } = await embed({
+  model: zhipu.embeddingModel("embedding-3", { dimensions: 256 }),
+  value: "Hello, world!",
 });
 
-console.log(providerMetadata.zhipu.images[0].url);
+// Multiple embeddings
+const { embeddings } = await embedMany({
+  model: zhipu.embeddingModel("embedding-3"),
+  values: ["Hello", "World"],
+});
 ```
 
-## Features Support
+### Image Generation
 
-- [x] Text generation
-- [x] Text embedding
-- [x] Image generation
-- [x] Chat
-- [x] Tools / Function calling
-- [x] Streaming
-- [x] Structured output (JSON mode)
-- [x] Reasoning / Thinking mode
-- [x] Vision (images and video)
-- [x] Vision Reasoning
-- [x] Cache token accounting
-- [ ] Provider-defined tools (web_search, retrieval)
-- [ ] Voice Models
+```ts
+import { generateImage } from "ai";
+import { zhipu, zhipuImageOptions } from "zhipu-ai-sdk-provider";
 
-## Documentation
+const { images } = await generateImage({
+  model: zhipu.imageModel("cogview-4-250304"),
+  prompt: "A beautiful landscape with mountains and a river",
+  size: "1024x1024",
+  providerOptions: zhipuImageOptions({ quality: "hd" }),
+});
 
-- **[Zhipu API Reference](https://docs.z.ai/api-reference/llm/chat-completion)**
-- **[GLM Model Guide](https://docs.z.ai/guides/llm/glm-4.7)**
-- **[Vercel AI SDK Documentation](https://sdk.vercel.ai/docs/introduction)**
-- **[Zhipu AI Provider Repo](https://github.com/meabed/zhipu-ai-sdk-provider)**
+// Images are returned as URLs
+console.log(images[0]); // URL string
+```
+
+> **Note:** The Zhipu image API returns URLs, not base64 data. Image URLs are also available in `providerMetadata.zhipu.images[0].url`.
+
+#### Image Size Constraints
+
+- Width and height must be between 512–2048 pixels
+- Both must be divisible by 16
+- Total pixels (width × height) must not exceed 2²¹
+
+## Features
+
+- ✅ Text generation (`generateText`, `streamText`)
+- ✅ Structured output (JSON mode)
+- ✅ Tool / function calling
+- ✅ Streaming with reasoning events (`reasoning-start`, `reasoning-delta`, `reasoning-end`)
+- ✅ Thinking / reasoning mode (GLM-5, GLM-4.7, GLM-4.5)
+- ✅ Preserved thinking (`clearThinking: false`)
+- ✅ Vision (images and video URLs)
+- ✅ Vision + reasoning models
+- ✅ Embeddings (`embed`, `embedMany`)
+- ✅ Image generation (`generateImage`)
+- ✅ Cached token accounting (`inputTokens.cacheRead`)
+- ✅ Reasoning token accounting (`outputTokens.reasoning`)
+- ⬜ Provider-defined tools (`web_search`, `retrieval`)
+- ⬜ Voice / speech models
+
+## Exported Types
+
+```ts
+import type {
+  ZhipuProvider,
+  ZhipuProviderSettings,
+  ZhipuChatModelId,
+  ZhipuChatSettings,
+  ZhipuThinkingConfig,
+  ZhipuProviderOptions,
+  ZhipuEmbeddingModelId,
+  ZhipuImageModelId,
+  ZhipuImageProviderOptions,
+} from "zhipu-ai-sdk-provider";
+
+import { zhipu, createZhipu, zhipuOptions, zhipuImageOptions } from "zhipu-ai-sdk-provider";
+```
+
+## Links
+
+- [Zhipu API Reference](https://docs.z.ai/api-reference/llm/chat-completion)
+- [GLM Model Guide](https://docs.z.ai/guides/llm/glm-4.7)
+- [Thinking Mode Docs](https://docs.z.ai/guides/capabilities/thinking)
+- [Vercel AI SDK Docs](https://sdk.vercel.ai/docs/introduction)
+- [GitHub Repository](https://github.com/meabed/zhipu-ai-provider)
+
+## License
+
+[MIT](./LICENSE.md)
