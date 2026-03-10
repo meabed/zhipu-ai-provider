@@ -372,7 +372,8 @@ describe("doGenerate", () => {
     expect(body.messages).toEqual([{ role: "user", content: "Hello" }]);
     expect(body.user_id).toBe("override-user-id");
     expect(body.temperature).toBe(0.8);
-    expect(body.tool_choice).toBe("auto");
+    // tool_choice should not be sent when no tools are provided
+    expect(body.tool_choice).toBeUndefined();
   });
 
   it("should pass tools and toolChoice", async () => {
@@ -1077,7 +1078,8 @@ describe("doStream", () => {
     expect(body.messages).toEqual([{ role: "user", content: "Hello" }]);
     expect(body.temperature).toBe(0.9);
     expect(body.top_p).toBe(0.95);
-    expect(body.tool_choice).toBe("auto");
+    // tool_choice should not be sent when no tools are provided
+    expect(body.tool_choice).toBeUndefined();
   });
 
   it("should pass headers", async () => {

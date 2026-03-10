@@ -241,9 +241,13 @@ export class ZhipuChatLanguageModel implements LanguageModelV3 {
       // messages:
       messages: convertToZhipuChatMessages(prompt),
 
-      // tools:
-      tool_choice: "auto",
-      tools: buildToolsArray(functionTools, providerTools),
+      // tools (only include when tools are provided):
+      ...(functionTools.length > 0 || providerTools.length > 0
+        ? {
+            tool_choice: "auto",
+            tools: buildToolsArray(functionTools, providerTools),
+          }
+        : {}),
     };
 
     return {
