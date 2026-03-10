@@ -1,0 +1,269 @@
+import { describe, it, expect } from "vitest";
+import { createZhipu } from "./zhipu-provider";
+import { createTestServer } from "./test-server";
+
+const TEST_API_KEY = "test-api-key";
+
+const server = createTestServer({
+  "https://open.bigmodel.cn/api/paas/v4/images/generations": {
+    response: { type: "json-value", body: {} },
+  },
+});
+
+function prepareJsonResponse({
+  url = "https://example.com/generated-image.png",
+  created = 1711115037,
+  headers,
+}: {
+  url?: string;
+  created?: number;
+  headers?: Record<string, string>;
+} = {}) {
+  server.urls[
+    "https://open.bigmodel.cn/api/paas/v4/images/generations"
+  ].response = {
+    type: "json-value",
+    headers,
+    body: {
+      created,
+      data: [{ url }],
+    },
+  };
+}
+
+describe("ZhipuImageModel", () => {
+  const provider = createZhipu({ apiKey: TEST_API_KEY });
+  const model = provider.imageModel("cogview-4-250304");
+
+  it("should have correct specificationVersion", () => {
+    expect(model.specificationVersion).toBe("v3");
+  });
+
+  it("should have correct modelId", () => {
+    expect(model.modelId).toBe("cogview-4-250304");
+  });
+
+  it("should generate image and return URL", async () => {
+    prepareJsonResponse({ url: "https://example.com/image.png" });
+
+    const result = await model.doGenerate({
+      prompt: "A beautiful sunset",
+      n: 1,
+      size: "1024x1024",
+      providerOptions: {},
+    });
+
+    expect(result.images).toStrictEqual(["https://example.com/image.png"]);
+  });
+
+  it("should include providerMetadata with image URLs", async () => {
+    prepareJsonResponse({ url: "https://example.com/image.png" });
+
+    const result = await model.doGenerate({
+      prompt: "A cat",
+      n: 1,
+      size: "1024x1024",
+      providerOptions: {},
+    });
+
+    expect(result.providerMetadata).toStrictEqual({
+      zhipu: {
+        images: [{ url: "https://example.com/image.png" }],
+      },
+    });
+  });
+
+  it("should pass model and prompt in request body", async () => {
+    prepareJsonResponse();
+
+    await model.doGenerate({
+      prompt: "A landscape with mountains",
+      n: 1,
+      size: "1024x1024",
+      providerOptions: {},
+    });
+
+    const calls =
+      server.urls["https://open.bigmodel.cn/api/paas/v4/images/generations"]
+        .calls;
+    const body = calls[calls.length - 1].requestBodyJson as Record<
+      string,
+      unknown
+    >;
+    expect(body.model).toBe("cogview-4-250304");
+    expect(body.prompt).toBe("A landscape with mountains");
+    expect(body.size).toBe("1024x1024");
+  });
+
+  it("should pass authorization header", async () => {
+    prepareJsonResponse();
+
+    await model.doGenerate({
+      prompt: "Test",
+      n: 1,
+      size: "1024x1024",
+      providerOptions: {},
+    });
+
+    const calls =
+      server.urls["https://open.bigmodel.cn/api/paas/v4/images/generations"]
+        .calls;
+    const headers = calls[calls.length - 1].requestHeaders;
+    expect(headers.authorization).toBe(`Bearer ${TEST_API_KEY}`);
+  });
+
+  it("should warn when n > 1", async () => {
+    prepareJsonResponse();
+
+    const result = await model.doGenerate({
+      prompt: "Test",
+      n: 4,
+      size: "1024x1024",
+      providerOptions: {},
+    });
+
+    expect(result.warnings).toContainEqual({
+      type: "unsupported",
+      feature: "n",
+      details: "This model does not support multiple images per call.",
+    });
+  });
+
+  it("should warn when aspectRatio is provided", async () => {
+    prepareJsonResponse();
+
+    const result = await model.doGenerate({
+      prompt: "Test",
+      n: 1,
+      size: "1024x1024",
+      aspectRatio: "16:9",
+      providerOptions: {},
+    });
+
+    expect(result.warnings).toContainEqual({
+      type: "unsupported",
+      feature: "aspectRatio",
+      details:
+        "This model does not support aspect ratio. Use `size` instead.",
+    });
+  });
+
+  it("should warn when seed is provided", async () => {
+    prepareJsonResponse();
+
+    const result = await model.doGenerate({
+      prompt: "Test",
+      n: 1,
+      size: "1024x1024",
+      seed: 42,
+      providerOptions: {},
+    });
+
+    expect(result.warnings).toContainEqual({
+      type: "unsupported",
+      feature: "seed",
+    });
+  });
+
+  it("should throw on invalid size", async () => {
+    prepareJsonResponse();
+
+    await expect(
+      model.doGenerate({
+        prompt: "Test",
+        n: 1,
+        size: "100x100",
+        providerOptions: {},
+      }),
+    ).rejects.toThrow("Invalid size");
+  });
+
+  it("should throw on size not divisible by 16", async () => {
+    prepareJsonResponse();
+
+    await expect(
+      model.doGenerate({
+        prompt: "Test",
+        n: 1,
+        size: "1000x1000",
+        providerOptions: {},
+      }),
+    ).rejects.toThrow("Invalid size");
+  });
+
+  it("should pass provider options to request body", async () => {
+    prepareJsonResponse();
+
+    await model.doGenerate({
+      prompt: "Test",
+      n: 1,
+      size: "1024x1024",
+      providerOptions: {
+        zhipu: {
+          quality: "hd",
+        },
+      },
+    });
+
+    const calls =
+      server.urls["https://open.bigmodel.cn/api/paas/v4/images/generations"]
+        .calls;
+    const body = calls[calls.length - 1].requestBodyJson as Record<
+      string,
+      unknown
+    >;
+    expect(body.quality).toBe("hd");
+  });
+
+  it("should include response metadata", async () => {
+    prepareJsonResponse();
+
+    const result = await model.doGenerate({
+      prompt: "Test",
+      n: 1,
+      size: "1024x1024",
+      providerOptions: {},
+    });
+
+    expect(result.response.modelId).toBe("cogview-4-250304");
+    expect(result.response.timestamp).toBeInstanceOf(Date);
+    expect(result.response.headers).toBeDefined();
+  });
+
+  it("should pass custom headers", async () => {
+    prepareJsonResponse();
+
+    const provider = createZhipu({
+      apiKey: TEST_API_KEY,
+      headers: { "X-Custom": "custom-value" },
+    });
+
+    await provider.imageModel("cogview-4").doGenerate({
+      prompt: "Test",
+      n: 1,
+      size: "1024x1024",
+      providerOptions: {},
+      headers: { "X-Request": "request-value" },
+    });
+
+    const calls =
+      server.urls["https://open.bigmodel.cn/api/paas/v4/images/generations"]
+        .calls;
+    const headers = calls[calls.length - 1].requestHeaders;
+    expect(headers["x-custom"]).toBe("custom-value");
+    expect(headers["x-request"]).toBe("request-value");
+  });
+
+  it("should not include warnings when no unsupported features are used", async () => {
+    prepareJsonResponse();
+
+    const result = await model.doGenerate({
+      prompt: "Test",
+      n: 1,
+      size: "1024x1024",
+      providerOptions: {},
+    });
+
+    expect(result.warnings).toStrictEqual([]);
+  });
+});

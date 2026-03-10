@@ -606,264 +606,303 @@ describe("doStream", () => {
     );
   });
 
-  // it("should stream tool deltas", async () => {
-  //     server.responseChunks = [
-  //         `data: {"id":"chatcmpl-96aZqmeDpA9IPD6tACY8djkMsJCMP","object":"chat.completion.chunk","created":1711357598,"model":"glm-4-flash-0125",` +
-  //             `"system_fingerprint":"fp_3bc1b5746c","choices":[{"index":0,"delta":{"role":"assistant","content":null,` +
-  //             `"tool_calls":[{"index":0,"id":"call_O17Uplv4lJvD6DVdIvFFeRMw","type":"function","function":{"name":"test-tool","arguments":""}}]},` +
-  //             `"finish_reason":null}]}\n\n`,
-  //         `data: {"id":"chatcmpl-96aZqmeDpA9IPD6tACY8djkMsJCMP","object":"chat.completion.chunk","created":1711357598,"model":"glm-4-flash-0125",` +
-  //             `"system_fingerprint":"fp_3bc1b5746c","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"function":{"arguments":"{\\""}}]},` +
-  //             `"finish_reason":null}]}\n\n`,
-  //         `data: {"id":"chatcmpl-96aZqmeDpA9IPD6tACY8djkMsJCMP","object":"chat.completion.chunk","created":1711357598,"model":"glm-4-flash-0125",` +
-  //             `"system_fingerprint":"fp_3bc1b5746c","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"function":{"arguments":"value"}}]},` +
-  //             `"finish_reason":null}]}\n\n`,
-  //         `data: {"id":"chatcmpl-96aZqmeDpA9IPD6tACY8djkMsJCMP","object":"chat.completion.chunk","created":1711357598,"model":"glm-4-flash-0125",` +
-  //             `"system_fingerprint":"fp_3bc1b5746c","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"function":{"arguments":"\\":\\""}}]},` +
-  //             `"finish_reason":null}]}\n\n`,
-  //         `data: {"id":"chatcmpl-96aZqmeDpA9IPD6tACY8djkMsJCMP","object":"chat.completion.chunk","created":1711357598,"model":"glm-4-flash-0125",` +
-  //             `"system_fingerprint":"fp_3bc1b5746c","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"function":{"arguments":"Spark"}}]},` +
-  //             `"finish_reason":null}]}\n\n`,
-  //         `data: {"id":"chatcmpl-96aZqmeDpA9IPD6tACY8djkMsJCMP","object":"chat.completion.chunk","created":1711357598,"model":"glm-4-flash-0125",` +
-  //             `"system_fingerprint":"fp_3bc1b5746c","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"function":{"arguments":"le"}}]},` +
-  //             `"finish_reason":null}]}\n\n`,
-  //         `data: {"id":"chatcmpl-96aZqmeDpA9IPD6tACY8djkMsJCMP","object":"chat.completion.chunk","created":1711357598,"model":"glm-4-flash-0125",` +
-  //             `"system_fingerprint":"fp_3bc1b5746c","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"function":{"arguments":" Day"}}]},` +
-  //             `"finish_reason":null}]}\n\n`,
-  //         `data: {"id":"chatcmpl-96aZqmeDpA9IPD6tACY8djkMsJCMP","object":"chat.completion.chunk","created":1711357598,"model":"glm-4-flash-0125",` +
-  //             `"system_fingerprint":"fp_3bc1b5746c","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"function":{"arguments":"\\"}"}}]},` +
-  //             `"finish_reason":null}]}\n\n`,
-  //         `data: {"id":"chatcmpl-96aZqmeDpA9IPD6tACY8djkMsJCMP","object":"chat.completion.chunk","created":1711357598,"model":"glm-4-flash-0125",` +
-  //             `"system_fingerprint":"fp_3bc1b5746c","choices":[{"index":0,"delta":{},"finish_reason":"tool_calls"}]}\n\n`,
-  //         `data: {"id":"chatcmpl-96aZqmeDpA9IPD6tACY8djkMsJCMP","object":"chat.completion.chunk","created":1711357598,"model":"glm-4-flash-0125",` +
-  //             `"system_fingerprint":"fp_3bc1b5746c","choices":[],"usage":{"prompt_tokens":53,"completion_tokens":17,"total_tokens":70}}\n\n`,
-  //         "data: [DONE]\n\n",
-  //     ];
+  it("should stream reasoning then content then tool_calls (GLM-5 style)", async () => {
+    // Real GLM-5 response pattern: reasoning → content → tool_calls → finish with cached tokens
+    server.urls[
+      "https://open.bigmodel.cn/api/paas/v4/chat/completions"
+    ].response = {
+      type: "stream-chunks",
+      chunks: [
+        // Reasoning chunks
+        `data: {"id":"glm5-resp-001","object":"chat.completion.chunk","created":1773167900,"model":"glm-5",` +
+          `"choices":[{"index":0,"delta":{"role":"assistant","reasoning_content":"Let me"}}]}\n\n`,
+        `data: {"id":"glm5-resp-001","object":"chat.completion.chunk","created":1773167900,"model":"glm-5",` +
+          `"choices":[{"index":0,"delta":{"role":"assistant","reasoning_content":" think about this."}}]}\n\n`,
+        // Content chunks
+        `data: {"id":"glm5-resp-001","object":"chat.completion.chunk","created":1773167900,"model":"glm-5",` +
+          `"choices":[{"index":0,"delta":{"role":"assistant","content":"Let me read"}}]}\n\n`,
+        `data: {"id":"glm5-resp-001","object":"chat.completion.chunk","created":1773167900,"model":"glm-5",` +
+          `"choices":[{"index":0,"delta":{"role":"assistant","content":" the file."}}]}\n\n`,
+        // Tool call chunk (full arguments in one chunk, matching real GLM-5 behavior)
+        `data: {"id":"glm5-resp-001","object":"chat.completion.chunk","created":1773167900,"model":"glm-5",` +
+          `"choices":[{"index":0,"delta":{"tool_calls":[{"id":"call_58107da92b3f","index":0,"type":"function",` +
+          `"function":{"name":"read-file","arguments":"{\\"path\\":\\"index.ts\\"}"}}]}}]}\n\n`,
+        // Finish chunk with usage (matching real GLM-5 final chunk shape)
+        `data: {"id":"glm5-resp-001","object":"chat.completion.chunk","created":1773167900,"model":"glm-5",` +
+          `"choices":[{"index":0,"finish_reason":"tool_calls","delta":{"role":"assistant","content":""}}],` +
+          `"usage":{"prompt_tokens":16316,"completion_tokens":156,"total_tokens":16472,` +
+          `"prompt_tokens_details":{"cached_tokens":15808}}}\n\n`,
+        "data: [DONE]\n\n",
+      ],
+    };
 
-  //     const { stream } = await model.doStream({
-  //         inputFormat: "prompt",
-  //         mode: {
-  //             type: "regular",
-  //             tools: [
-  //                 {
-  //                     type: "function",
-  //                     name: "test-tool",
-  //                     parameters: {
-  //                         type: "object",
-  //                         properties: { value: { type: "string" } },
-  //                         required: ["value"],
-  //                         additionalProperties: false,
-  //                         $schema: "http://json-schema.org/draft-07/schema#",
-  //                     },
-  //                 },
-  //             ],
-  //         },
-  //         prompt: TEST_PROMPT,
-  //     });
+    const { stream } = await model.doStream({ prompt: TEST_PROMPT });
+    const result = await convertReadableStreamToArray(stream);
 
-  //     expect(await convertReadableStreamToArray(stream)).toStrictEqual([
-  //         {
-  //             type: "response-metadata",
-  //             id: "chatcmpl-96aZqmeDpA9IPD6tACY8djkMsJCMP",
-  //             modelId: "glm-4-flash-0125",
-  //             timestamp: new Date("2024-03-25T09:06:38.000Z"),
-  //         },
-  //         {
-  //             type: "tool-call-delta",
-  //             toolCallId: "call_O17Uplv4lJvD6DVdIvFFeRMw",
-  //             toolCallType: "function",
-  //             toolName: "test-tool",
-  //             argsTextDelta: '{"',
-  //         },
-  //         {
-  //             type: "tool-call-delta",
-  //             toolCallId: "call_O17Uplv4lJvD6DVdIvFFeRMw",
-  //             toolCallType: "function",
-  //             toolName: "test-tool",
-  //             argsTextDelta: "value",
-  //         },
-  //         {
-  //             type: "tool-call-delta",
-  //             toolCallId: "call_O17Uplv4lJvD6DVdIvFFeRMw",
-  //             toolCallType: "function",
-  //             toolName: "test-tool",
-  //             argsTextDelta: '":"',
-  //         },
-  //         {
-  //             type: "tool-call-delta",
-  //             toolCallId: "call_O17Uplv4lJvD6DVdIvFFeRMw",
-  //             toolCallType: "function",
-  //             toolName: "test-tool",
-  //             argsTextDelta: "Spark",
-  //         },
-  //         {
-  //             type: "tool-call-delta",
-  //             toolCallId: "call_O17Uplv4lJvD6DVdIvFFeRMw",
-  //             toolCallType: "function",
-  //             toolName: "test-tool",
-  //             argsTextDelta: "le",
-  //         },
-  //         {
-  //             type: "tool-call-delta",
-  //             toolCallId: "call_O17Uplv4lJvD6DVdIvFFeRMw",
-  //             toolCallType: "function",
-  //             toolName: "test-tool",
-  //             argsTextDelta: " Day",
-  //         },
-  //         {
-  //             type: "tool-call-delta",
-  //             toolCallId: "call_O17Uplv4lJvD6DVdIvFFeRMw",
-  //             toolCallType: "function",
-  //             toolName: "test-tool",
-  //             argsTextDelta: '"}',
-  //         },
-  //         {
-  //             type: "tool-call",
-  //             toolCallId: "call_O17Uplv4lJvD6DVdIvFFeRMw",
-  //             toolCallType: "function",
-  //             toolName: "test-tool",
-  //             args: '{"value":"Sparkle Day"}',
-  //         },
-  //         {
-  //             type: "finish",
-  //             finishReason: "tool-calls",
-  //             usage: { promptTokens: 53, completionTokens: 17 },
-  //         },
-  //     ]);
-  // });
+    const types = result.map((r) => r.type);
+    expect(types).toContain("stream-start");
+    expect(types).toContain("response-metadata");
+    expect(types).toContain("reasoning-start");
+    expect(types).toContain("reasoning-delta");
+    expect(types).toContain("text-delta");
+    expect(types).toContain("tool-input-start");
+    expect(types).toContain("tool-call");
+    expect(types).toContain("finish");
 
-  // it("should stream tool call deltas when tool call arguments are passed in the first chunk", async () => {
-  //     server.responseChunks = [
-  //         `data: {"id":"chatcmpl-96aZqmeDpA9IPD6tACY8djkMsJCMP","object":"chat.completion.chunk","created":1711357598,"model":"glm-4-flash-0125",` +
-  //             `"system_fingerprint":"fp_3bc1b5746c","choices":[{"index":0,"delta":{"role":"assistant","content":null,` +
-  //             `"tool_calls":[{"index":0,"id":"call_O17Uplv4lJvD6DVdIvFFeRMw","type":"function","function":{"name":"test-tool","arguments":"{\\""}}]},` +
-  //             `"finish_reason":null}]}\n\n`,
-  //         `data: {"id":"chatcmpl-96aZqmeDpA9IPD6tACY8djkMsJCMP","object":"chat.completion.chunk","created":1711357598,"model":"glm-4-flash-0125",` +
-  //             `"system_fingerprint":"fp_3bc1b5746c","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"function":{"arguments":"va"}}]},` +
-  //             `"finish_reason":null}]}\n\n`,
-  //         `data: {"id":"chatcmpl-96aZqmeDpA9IPD6tACY8djkMsJCMP","object":"chat.completion.chunk","created":1711357598,"model":"glm-4-flash-0125",` +
-  //             `"system_fingerprint":"fp_3bc1b5746c","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"function":{"arguments":"lue"}}]},` +
-  //             `"finish_reason":null}]}\n\n`,
-  //         `data: {"id":"chatcmpl-96aZqmeDpA9IPD6tACY8djkMsJCMP","object":"chat.completion.chunk","created":1711357598,"model":"glm-4-flash-0125",` +
-  //             `"system_fingerprint":"fp_3bc1b5746c","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"function":{"arguments":"\\":\\""}}]},` +
-  //             `"finish_reason":null}]}\n\n`,
-  //         `data: {"id":"chatcmpl-96aZqmeDpA9IPD6tACY8djkMsJCMP","object":"chat.completion.chunk","created":1711357598,"model":"glm-4-flash-0125",` +
-  //             `"system_fingerprint":"fp_3bc1b5746c","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"function":{"arguments":"Spark"}}]},` +
-  //             `"finish_reason":null}]}\n\n`,
-  //         `data: {"id":"chatcmpl-96aZqmeDpA9IPD6tACY8djkMsJCMP","object":"chat.completion.chunk","created":1711357598,"model":"glm-4-flash-0125",` +
-  //             `"system_fingerprint":"fp_3bc1b5746c","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"function":{"arguments":"le"}}]},` +
-  //             `"finish_reason":null}]}\n\n`,
-  //         `data: {"id":"chatcmpl-96aZqmeDpA9IPD6tACY8djkMsJCMP","object":"chat.completion.chunk","created":1711357598,"model":"glm-4-flash-0125",` +
-  //             `"system_fingerprint":"fp_3bc1b5746c","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"function":{"arguments":" Day"}}]},` +
-  //             `"finish_reason":null}]}\n\n`,
-  //         `data: {"id":"chatcmpl-96aZqmeDpA9IPD6tACY8djkMsJCMP","object":"chat.completion.chunk","created":1711357598,"model":"glm-4-flash-0125",` +
-  //             `"system_fingerprint":"fp_3bc1b5746c","choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"function":{"arguments":"\\"}"}}]},` +
-  //             `"finish_reason":null}]}\n\n`,
-  //         `data: {"id":"chatcmpl-96aZqmeDpA9IPD6tACY8djkMsJCMP","object":"chat.completion.chunk","created":1711357598,"model":"glm-4-flash-0125",` +
-  //             `"system_fingerprint":"fp_3bc1b5746c","choices":[{"index":0,"delta":{},"finish_reason":"tool_calls"}]}\n\n`,
-  //         `data: {"id":"chatcmpl-96aZqmeDpA9IPD6tACY8djkMsJCMP","object":"chat.completion.chunk","created":1711357598,"model":"glm-4-flash-0125",` +
-  //             `"system_fingerprint":"fp_3bc1b5746c","choices":[],"usage":{"prompt_tokens":53,"completion_tokens":17,"total_tokens":70}}\n\n`,
-  //         "data: [DONE]\n\n",
-  //     ];
+    // Verify reasoning deltas
+    const reasoningDeltas = result.filter((r) => r.type === "reasoning-delta");
+    expect(reasoningDeltas).toHaveLength(2);
+    expect(reasoningDeltas[0]).toMatchObject({ delta: "Let me" });
+    expect(reasoningDeltas[1]).toMatchObject({ delta: " think about this." });
 
-  //     const { stream } = await model.doStream({
-  //         inputFormat: "prompt",
-  //         mode: {
-  //             type: "regular",
-  //             tools: [
-  //                 {
-  //                     type: "function",
-  //                     name: "test-tool",
-  //                     parameters: {
-  //                         type: "object",
-  //                         properties: { value: { type: "string" } },
-  //                         required: ["value"],
-  //                         additionalProperties: false,
-  //                         $schema: "http://json-schema.org/draft-07/schema#",
-  //                     },
-  //                 },
-  //             ],
-  //         },
-  //         prompt: TEST_PROMPT,
-  //     });
+    // Verify text deltas
+    const textDeltas = result.filter((r) => r.type === "text-delta");
+    expect(textDeltas.length).toBeGreaterThanOrEqual(2);
 
-  //     expect(await convertReadableStreamToArray(stream)).toStrictEqual([
-  //         {
-  //             type: "response-metadata",
-  //             id: "chatcmpl-96aZqmeDpA9IPD6tACY8djkMsJCMP",
-  //             modelId: "glm-4-flash-0125",
-  //             timestamp: new Date("2024-03-25T09:06:38.000Z"),
-  //         },
-  //         {
-  //             type: "tool-call-delta",
-  //             toolCallId: "call_O17Uplv4lJvD6DVdIvFFeRMw",
-  //             toolCallType: "function",
-  //             toolName: "test-tool",
-  //             argsTextDelta: '{"',
-  //         },
-  //         {
-  //             type: "tool-call-delta",
-  //             toolCallId: "call_O17Uplv4lJvD6DVdIvFFeRMw",
-  //             toolCallType: "function",
-  //             toolName: "test-tool",
-  //             argsTextDelta: "va",
-  //         },
-  //         {
-  //             type: "tool-call-delta",
-  //             toolCallId: "call_O17Uplv4lJvD6DVdIvFFeRMw",
-  //             toolCallType: "function",
-  //             toolName: "test-tool",
-  //             argsTextDelta: "lue",
-  //         },
-  //         {
-  //             type: "tool-call-delta",
-  //             toolCallId: "call_O17Uplv4lJvD6DVdIvFFeRMw",
-  //             toolCallType: "function",
-  //             toolName: "test-tool",
-  //             argsTextDelta: '":"',
-  //         },
-  //         {
-  //             type: "tool-call-delta",
-  //             toolCallId: "call_O17Uplv4lJvD6DVdIvFFeRMw",
-  //             toolCallType: "function",
-  //             toolName: "test-tool",
-  //             argsTextDelta: "Spark",
-  //         },
-  //         {
-  //             type: "tool-call-delta",
-  //             toolCallId: "call_O17Uplv4lJvD6DVdIvFFeRMw",
-  //             toolCallType: "function",
-  //             toolName: "test-tool",
-  //             argsTextDelta: "le",
-  //         },
-  //         {
-  //             type: "tool-call-delta",
-  //             toolCallId: "call_O17Uplv4lJvD6DVdIvFFeRMw",
-  //             toolCallType: "function",
-  //             toolName: "test-tool",
-  //             argsTextDelta: " Day",
-  //         },
-  //         {
-  //             type: "tool-call-delta",
-  //             toolCallId: "call_O17Uplv4lJvD6DVdIvFFeRMw",
-  //             toolCallType: "function",
-  //             toolName: "test-tool",
-  //             argsTextDelta: '"}',
-  //         },
-  //         {
-  //             type: "tool-call",
-  //             toolCallId: "call_O17Uplv4lJvD6DVdIvFFeRMw",
-  //             toolCallType: "function",
-  //             toolName: "test-tool",
-  //             args: '{"value":"Sparkle Day"}',
-  //         },
-  //         {
-  //             type: "finish",
-  //             finishReason: "tool-calls",
-  //             usage: { promptTokens: 53, completionTokens: 17 },
-  //         },
-  //     ]);
-  // });
+    // Verify tool call
+    const toolCall = result.find((r) => r.type === "tool-call");
+    expect(toolCall).toMatchObject({
+      type: "tool-call",
+      toolCallId: "call_58107da92b3f",
+      toolName: "read-file",
+      input: '{"path":"index.ts"}',
+    });
+
+    // Verify finish with cached tokens
+    const finish = result.find((r) => r.type === "finish");
+    expect(finish).toMatchObject({
+      finishReason: { unified: "tool-calls", raw: "tool_calls" },
+      usage: {
+        inputTokens: {
+          total: 16316,
+          noCache: 508,
+          cacheRead: 15808,
+          cacheWrite: undefined,
+        },
+        outputTokens: {
+          total: 156,
+          text: 156,
+          reasoning: undefined,
+        },
+      },
+    });
+  });
+
+  it("should stream with cached and reasoning tokens (GLM-4.7 style)", async () => {
+    // Real GLM-4.7 response: reasoning → content → tool_calls → finish with both cached + reasoning tokens
+    server.urls[
+      "https://open.bigmodel.cn/api/paas/v4/chat/completions"
+    ].response = {
+      type: "stream-chunks",
+      chunks: [
+        `data: {"id":"glm47-resp-001","object":"chat.completion.chunk","created":1773167957,"model":"glm-4.7",` +
+          `"choices":[{"index":0,"delta":{"role":"assistant","reasoning_content":"Analyzing..."}}]}\n\n`,
+        `data: {"id":"glm47-resp-001","object":"chat.completion.chunk","created":1773167957,"model":"glm-4.7",` +
+          `"choices":[{"index":0,"delta":{"role":"assistant","content":"I found the files."}}]}\n\n`,
+        `data: {"id":"glm47-resp-001","object":"chat.completion.chunk","created":1773167957,"model":"glm-4.7",` +
+          `"choices":[{"index":0,"delta":{"tool_calls":[{"id":"call_aeba6bac","index":0,"type":"function",` +
+          `"function":{"name":"find-files","arguments":"{\\"listAll\\":true}"}}]}}]}\n\n`,
+        `data: {"id":"glm47-resp-001","object":"chat.completion.chunk","created":1773167957,"model":"glm-4.7",` +
+          `"choices":[{"index":0,"finish_reason":"tool_calls","delta":{"role":"assistant","content":""}}],` +
+          `"usage":{"prompt_tokens":15563,"completion_tokens":95,"total_tokens":15658,` +
+          `"prompt_tokens_details":{"cached_tokens":42},"completion_tokens_details":{"reasoning_tokens":65}}}\n\n`,
+        "data: [DONE]\n\n",
+      ],
+    };
+
+    const { stream } = await model.doStream({ prompt: TEST_PROMPT });
+    const result = await convertReadableStreamToArray(stream);
+
+    const finish = result.find((r) => r.type === "finish");
+    expect(finish).toMatchObject({
+      finishReason: { unified: "tool-calls", raw: "tool_calls" },
+      usage: {
+        inputTokens: {
+          total: 15563,
+          noCache: 15521,
+          cacheRead: 42,
+          cacheWrite: undefined,
+        },
+        outputTokens: {
+          total: 95,
+          text: 30,
+          reasoning: 65,
+        },
+      },
+    });
+  });
+
+  it("should stream tool call deltas across multiple chunks", async () => {
+    server.urls[
+      "https://open.bigmodel.cn/api/paas/v4/chat/completions"
+    ].response = {
+      type: "stream-chunks",
+      chunks: [
+        // First chunk: tool call start with id, name, empty args
+        `data: {"id":"tc-stream","object":"chat.completion.chunk","created":1711357598,"model":"glm-4-flash",` +
+          `"choices":[{"index":0,"delta":{"role":"assistant",` +
+          `"tool_calls":[{"index":0,"id":"call_O17Uplv4lJvD6DVdIvFFeRMw","type":"function","function":{"name":"test-tool","arguments":""}}]}}]}\n\n`,
+        // Continuation chunks: only index + function.arguments (no id, type, name)
+        `data: {"id":"tc-stream","object":"chat.completion.chunk","created":1711357598,"model":"glm-4-flash",` +
+          `"choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"function":{"arguments":"{\\"value"}}]}}]}\n\n`,
+        `data: {"id":"tc-stream","object":"chat.completion.chunk","created":1711357598,"model":"glm-4-flash",` +
+          `"choices":[{"index":0,"delta":{"tool_calls":[{"index":0,"function":{"arguments":"\\":\\"Sparkle Day\\"}"}}]}}]}\n\n`,
+        // Finish
+        `data: {"id":"tc-stream","object":"chat.completion.chunk","created":1711357598,"model":"glm-4-flash",` +
+          `"choices":[{"index":0,"delta":{},"finish_reason":"tool_calls"}],` +
+          `"usage":{"prompt_tokens":53,"completion_tokens":17,"total_tokens":70}}\n\n`,
+        "data: [DONE]\n\n",
+      ],
+    };
+
+    const { stream } = await model.doStream({ prompt: TEST_PROMPT });
+    const result = await convertReadableStreamToArray(stream);
+
+    // Verify tool-input-start is emitted
+    expect(result).toContainEqual(
+      expect.objectContaining({
+        type: "tool-input-start",
+        id: "call_O17Uplv4lJvD6DVdIvFFeRMw",
+        toolName: "test-tool",
+      }),
+    );
+
+    // Verify tool-input-delta for streaming args
+    const inputDeltas = result.filter((r) => r.type === "tool-input-delta");
+    expect(inputDeltas.length).toBeGreaterThanOrEqual(1);
+
+    // Verify complete tool-call emitted once args are valid JSON
+    expect(result).toContainEqual(
+      expect.objectContaining({
+        type: "tool-call",
+        toolCallId: "call_O17Uplv4lJvD6DVdIvFFeRMw",
+        toolName: "test-tool",
+        input: '{"value":"Sparkle Day"}',
+      }),
+    );
+
+    // Verify finish
+    expect(result).toContainEqual(
+      expect.objectContaining({
+        type: "finish",
+        finishReason: { unified: "tool-calls", raw: "tool_calls" },
+      }),
+    );
+  });
+
+  it("should handle sensitive finish reason as content-filter", async () => {
+    server.urls[
+      "https://open.bigmodel.cn/api/paas/v4/chat/completions"
+    ].response = {
+      type: "stream-chunks",
+      chunks: [
+        `data: {"id":"sens-1","object":"chat.completion.chunk","created":1702657020,"model":"glm-4-flash",` +
+          `"choices":[{"index":0,"delta":{"role":"assistant","content":"I cannot"},"finish_reason":"sensitive"}],` +
+          `"usage":{"prompt_tokens":10,"completion_tokens":2,"total_tokens":12}}\n\n`,
+        "data: [DONE]\n\n",
+      ],
+    };
+
+    const { stream } = await model.doStream({ prompt: TEST_PROMPT });
+    const result = await convertReadableStreamToArray(stream);
+
+    const finish = result.find((r) => r.type === "finish");
+    expect(finish).toMatchObject({
+      finishReason: { unified: "content-filter", raw: "sensitive" },
+    });
+  });
+
+  it("should handle network_error finish reason", async () => {
+    server.urls[
+      "https://open.bigmodel.cn/api/paas/v4/chat/completions"
+    ].response = {
+      type: "stream-chunks",
+      chunks: [
+        `data: {"id":"err-1","object":"chat.completion.chunk","created":1702657020,"model":"glm-4-flash",` +
+          `"choices":[{"index":0,"delta":{"role":"assistant","content":""},"finish_reason":"network_error"}]}\n\n`,
+        "data: [DONE]\n\n",
+      ],
+    };
+
+    const { stream } = await model.doStream({ prompt: TEST_PROMPT });
+    const result = await convertReadableStreamToArray(stream);
+
+    // network_error emits an error event
+    expect(result).toContainEqual(
+      expect.objectContaining({
+        type: "error",
+      }),
+    );
+  });
+
+  it("should stream reasoning directly to tool_calls with no content (GLM-4.7-flash style)", async () => {
+    // GLM-4.7-flash pattern: 110 reasoning chunks → tool_call → finish (no content chunks at all)
+    server.urls[
+      "https://open.bigmodel.cn/api/paas/v4/chat/completions"
+    ].response = {
+      type: "stream-chunks",
+      chunks: [
+        `data: {"id":"flash-001","object":"chat.completion.chunk","created":1773168059,"model":"glm-4.7-flash",` +
+          `"choices":[{"index":0,"delta":{"role":"assistant","reasoning_content":"The user wants"}}]}\n\n`,
+        `data: {"id":"flash-001","object":"chat.completion.chunk","created":1773168059,"model":"glm-4.7-flash",` +
+          `"choices":[{"index":0,"delta":{"role":"assistant","reasoning_content":" to list all files."}}]}\n\n`,
+        // Tool call directly after reasoning (no content chunks)
+        `data: {"id":"flash-001","object":"chat.completion.chunk","created":1773168059,"model":"glm-4.7-flash",` +
+          `"choices":[{"index":0,"delta":{"tool_calls":[{"id":"call_4b630193","index":0,"type":"function",` +
+          `"function":{"name":"find-library-files","arguments":"{\\"limit\\":30,\\"listAll\\":true}"}}]}}]}\n\n`,
+        `data: {"id":"flash-001","object":"chat.completion.chunk","created":1773168059,"model":"glm-4.7-flash",` +
+          `"choices":[{"index":0,"finish_reason":"tool_calls","delta":{"role":"assistant","content":""}}],` +
+          `"usage":{"prompt_tokens":16206,"completion_tokens":130,"total_tokens":16336,` +
+          `"prompt_tokens_details":{"cached_tokens":43},"completion_tokens_details":{"reasoning_tokens":110}}}\n\n`,
+        "data: [DONE]\n\n",
+      ],
+    };
+
+    const { stream } = await model.doStream({ prompt: TEST_PROMPT });
+    const result = await convertReadableStreamToArray(stream);
+
+    const types = result.map((r) => r.type);
+    expect(types).toContain("reasoning-start");
+    expect(types).toContain("reasoning-delta");
+    expect(types).toContain("tool-input-start");
+    expect(types).toContain("tool-call");
+    expect(types).toContain("finish");
+
+    // No text-delta should appear (only the empty content from finish chunk)
+    const textDeltas = result.filter(
+      (r) => r.type === "text-delta" && "delta" in r && r.delta !== "",
+    );
+    expect(textDeltas).toHaveLength(0);
+
+    // Verify tool call
+    expect(result).toContainEqual(
+      expect.objectContaining({
+        type: "tool-call",
+        toolCallId: "call_4b630193",
+        toolName: "find-library-files",
+        input: '{"limit":30,"listAll":true}',
+      }),
+    );
+
+    // Verify finish with both cached and reasoning tokens
+    const finish = result.find((r) => r.type === "finish");
+    expect(finish).toMatchObject({
+      finishReason: { unified: "tool-calls", raw: "tool_calls" },
+      usage: {
+        inputTokens: {
+          total: 16206,
+          noCache: 16163,
+          cacheRead: 43,
+          cacheWrite: undefined,
+        },
+        outputTokens: {
+          total: 130,
+          text: 20,
+          reasoning: 110,
+        },
+      },
+    });
+  });
 
   it("should handle unparsable stream parts", async () => {
     server.urls[

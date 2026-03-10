@@ -693,10 +693,14 @@ const zhipuChatChunkSchema = z.object({
         tool_calls: z
           .array(
             z.object({
-              id: z.string(),
+              // id, type, function.name may be absent on continuation chunks
+              id: z.string().nullish(),
               index: z.number(),
-              type: z.literal("function"),
-              function: z.object({ name: z.string(), arguments: z.string() }),
+              type: z.literal("function").nullish(),
+              function: z.object({
+                name: z.string().nullish(),
+                arguments: z.string().nullish(),
+              }),
             }),
           )
           .nullish(),
