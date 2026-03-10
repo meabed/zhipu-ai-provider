@@ -3,7 +3,7 @@
   "version": "0.2.1",
   "description": "Vercel AI SDK Custom Provider for Services from Zhipu",
   "author": "Chen Xiang",
-  "license": "Apache-2.0",
+  "license": "MIT",
   "sideEffects": false,
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
