@@ -34,7 +34,6 @@ type ZhipuChatConfig = {
 
 export class ZhipuChatLanguageModel implements LanguageModelV3 {
   readonly specificationVersion = "v3" as const;
-  readonly defaultObjectGenerationMode = "json";
   readonly supportedUrls: Record<string, RegExp[]> = {
     "image/*": [/^data:image\/[a-zA-Z]+;base64,/, /^https?:\/\/.+$/i],
     "video/*": [/^https?:\/\/.+\.(mp4|webm|ogg)$/i],
@@ -154,18 +153,9 @@ export class ZhipuChatLanguageModel implements LanguageModelV3 {
       });
     }
 
-    if (
-      responseFormat &&
-      responseFormat.type === "json" &&
-      (this.config.isMultiModel || this.config.isReasoningModel)
-    ) {
-      warnings.push({
-        type: "unsupported",
-        feature: "responseFormat",
-        details:
-          "JSON response format is not supported with vision and reasoning models.",
-      });
-    }
+    // Note: GLM-4.6v and newer vision models support JSON mode and reasoning.
+    // We no longer block response_format for vision/reasoning models since
+    // the Zhipu API handles it fine — the model can produce valid JSON output.
 
     if (tools && tools.length > 0 && this.config.isMultiModel) {
       warnings.push({
