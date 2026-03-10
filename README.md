@@ -145,19 +145,19 @@ const { text } = await generateText({
 });
 ```
 
-You can also configure thinking via `providerOptions`:
+You can also configure thinking via `providerOptions` using the `zhipuOptions` helper:
 
 ```ts
+import { zhipu, zhipuOptions } from "zhipu-ai-sdk-provider";
+
 const { text } = await generateText({
   model: zhipu("glm-4.7"),
   prompt: "Explain quantum computing in simple terms.",
-  providerOptions: {
-    zhipu: {
-      thinking: {
-        type: "disabled",
-      },
+  providerOptions: zhipuOptions({
+    thinking: {
+      type: "disabled",
     },
-  },
+  }),
 });
 ```
 
@@ -183,18 +183,13 @@ Zhipu supports image generation with the `cogview` models, but the API does not 
 
 ```ts
 import { experimental_generateImage as generateImage } from "ai";
-import { zhipu } from "zhipu-ai-sdk-provider";
+import { zhipu, zhipuImageOptions } from "zhipu-ai-sdk-provider";
 
 const { image, providerMetadata } = await generateImage({
   model: zhipu.imageModel("cogview-4-250304"),
   prompt: "A beautiful landscape with mountains and a river",
   size: "1024x1024", // optional
-  providerOptions: {
-    // optional
-    zhipu: {
-      quality: "hd",
-    },
-  },
+  providerOptions: zhipuImageOptions({ quality: "hd" }), // optional
 });
 
 console.log(providerMetadata.zhipu.images[0].url);

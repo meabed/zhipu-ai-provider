@@ -7,4 +7,5 @@ export type {
   ZhipuProviderOptions,
 } from "./zhipu-chat-settings";
 export type { ZhipuEmbeddingModelId } from "./zhipu-embedding-settings";
-export type { ZhipuImageModelId } from "./zhipu-image-options";
+export type { ZhipuImageModelId, ZhipuImageProviderOptions } from "./zhipu-image-options";
+export { zhipuOptions, zhipuImageOptions } from "./zhipu-options";

@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { ImageModelV3CallOptions } from "@ai-sdk/provider";
 import { createZhipu } from "./zhipu-provider";
+import { zhipuImageOptions } from "./zhipu-options";
 import { createTestServer } from "./test-server";
 
 const TEST_API_KEY = "test-api-key";
@@ -162,7 +163,7 @@ describe("ZhipuImageModel", () => {
     await model.doGenerate({
       ...BASE_OPTIONS,
       prompt: "Test",
-      providerOptions: { zhipu: { quality: "hd" } },
+      providerOptions: zhipuImageOptions({ quality: "hd" }),
     });
 
     const calls =

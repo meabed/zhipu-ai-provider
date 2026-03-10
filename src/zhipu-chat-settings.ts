@@ -75,22 +75,25 @@ export interface ZhipuThinkingConfig {
 }
 
 /**
- * Zhipu-specific provider options passed via `providerOptions.zhipu`.
+ * Zhipu-specific provider options passed via `providerOptions`.
  * These are sent directly to the Zhipu API as body parameters.
+ *
+ * Since this SDK is exclusively for Zhipu AI, you can pass options directly
+ * using the {@link zhipuOptions} helper (no nesting required):
  *
  * @example
  * ```ts
+ * import { zhipu, zhipuOptions } from "zhipu-ai-sdk-provider";
+ *
  * const result = await generateText({
  *   model: zhipu("glm-4.7"),
  *   prompt: "Explain quantum computing",
- *   providerOptions: {
- *     zhipu: {
- *       temperature: 0.7,
- *       top_p: 0.9,
- *       max_tokens: 4096,
- *       thinking: { type: "enabled", clear_thinking: false },
- *     },
- *   },
+ *   providerOptions: zhipuOptions({
+ *     temperature: 0.7,
+ *     top_p: 0.9,
+ *     max_tokens: 4096,
+ *     thinking: { type: "enabled", clear_thinking: false },
+ *   }),
  * });
  * ```
  *

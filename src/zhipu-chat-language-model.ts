@@ -268,7 +268,9 @@ export class ZhipuChatLanguageModel implements LanguageModelV3 {
   ): Promise<Awaited<ReturnType<LanguageModelV3["doGenerate"]>>> {
     const { args, warnings } = this.getArgs(options);
 
-    const zhipuOptions = (options.providerOptions?.zhipu ?? {}) as ZhipuProviderOptions;
+    // Support both direct providerOptions and nested providerOptions.zhipu
+    const rawOptions = options.providerOptions ?? {};
+    const zhipuOptions = (rawOptions.zhipu ?? rawOptions) as ZhipuProviderOptions;
 
     const fullArgs = {
       ...args,
@@ -361,7 +363,9 @@ export class ZhipuChatLanguageModel implements LanguageModelV3 {
   ): Promise<Awaited<ReturnType<LanguageModelV3["doStream"]>>> {
     const { args, warnings } = this.getArgs(options);
 
-    const zhipuOptions = (options.providerOptions?.zhipu ?? {}) as ZhipuProviderOptions;
+    // Support both direct providerOptions and nested providerOptions.zhipu
+    const rawOptions = options.providerOptions ?? {};
+    const zhipuOptions = (rawOptions.zhipu ?? rawOptions) as ZhipuProviderOptions;
 
     const body = { ...args, ...zhipuOptions, stream: true };
 

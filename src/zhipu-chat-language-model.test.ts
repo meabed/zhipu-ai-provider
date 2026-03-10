@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { LanguageModelV3Prompt } from "@ai-sdk/provider";
 import { convertReadableStreamToArray } from "@ai-sdk/provider-utils/test";
 import { createZhipu } from "./zhipu-provider";
+import { zhipuOptions } from "./zhipu-options";
 import { createTestServer } from "./test-server";
 
 // Zhipu API request body structure (subset of fields used in tests)
@@ -338,7 +339,7 @@ describe("doGenerate", () => {
     expect(body.user_id).toBe("test-user-id");
   });
 
-  it("should pass providerOptions.zhipu and override base args", async () => {
+  it("should pass providerOptions directly and override base args", async () => {
     prepareJsonResponse();
 
     await provider
@@ -347,12 +348,10 @@ describe("doGenerate", () => {
       })
       .doGenerate({
         prompt: TEST_PROMPT,
-        providerOptions: {
-          zhipu: {
-            user_id: "override-user-id",
-            temperature: 0.8,
-          },
-        },
+        providerOptions: zhipuOptions({
+          user_id: "override-user-id",
+          temperature: 0.8,
+        }),
       });
 
     const calls = server.urls["https://open.bigmodel.cn/api/paas/v4/chat/completions"].calls;
@@ -977,17 +976,15 @@ describe("doStream", () => {
     expect(body.messages).toEqual([{ role: "user", content: "Hello" }]);
   });
 
-  it("should pass providerOptions.zhipu in stream mode", async () => {
+  it("should pass providerOptions directly in stream mode", async () => {
     prepareStreamResponse({ content: [] });
 
     await model.doStream({
       prompt: TEST_PROMPT,
-      providerOptions: {
-        zhipu: {
-          temperature: 0.9,
-          top_p: 0.95,
-        },
-      },
+      providerOptions: zhipuOptions({
+        temperature: 0.9,
+        top_p: 0.95,
+      }),
     });
 
     const calls = server.urls["https://open.bigmodel.cn/api/paas/v4/chat/completions"].calls;
