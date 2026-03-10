@@ -20,7 +20,7 @@ import { z } from "zod";
 import { convertToZhipuChatMessages } from "./convert-to-zhipu-chat-messages";
 import { mapZhipuFinishReason } from "./map-zhipu-finish-reason";
 import { computeTokenUsage, emptyUsage } from "./compute-token-usage";
-import { ZhipuChatModelId, ZhipuChatSettings } from "./zhipu-chat-settings";
+import { ZhipuChatModelId, ZhipuChatSettings, ZhipuProviderOptions } from "./zhipu-chat-settings";
 import { zhipuFailedResponseHandler } from "./zhipu-error";
 import { getResponseMetadata } from "./get-response-metadata";
 
@@ -268,12 +268,11 @@ export class ZhipuChatLanguageModel implements LanguageModelV3 {
   ): Promise<Awaited<ReturnType<LanguageModelV3["doGenerate"]>>> {
     const { args, warnings } = this.getArgs(options);
 
-    const providerOptions = options.providerOptions || {};
-    const zhipuOptions = providerOptions.zhipu || {};
+    const zhipuOptions = (options.providerOptions?.zhipu ?? {}) as ZhipuProviderOptions;
 
     const fullArgs = {
       ...args,
-      // merge any zhipu-specific options last to allow overrides
+      // merge zhipu-specific provider options (allows runtime overrides)
       ...zhipuOptions,
     };
 
@@ -362,8 +361,7 @@ export class ZhipuChatLanguageModel implements LanguageModelV3 {
   ): Promise<Awaited<ReturnType<LanguageModelV3["doStream"]>>> {
     const { args, warnings } = this.getArgs(options);
 
-    const providerOptions = options.providerOptions || {};
-    const zhipuOptions = providerOptions.zhipu || {};
+    const zhipuOptions = (options.providerOptions?.zhipu ?? {}) as ZhipuProviderOptions;
 
     const body = { ...args, ...zhipuOptions, stream: true };
 

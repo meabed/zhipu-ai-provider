@@ -29,6 +29,12 @@ export type ZhipuChatModelId =
   | "glm-4v-plus"
   | "glm-4v"
   | "glm-4v-flash"
+  // Vision models (4.6)
+  | "glm-4.6v"
+  | "glm-4.6v-flash"
+  | "glm-4.6v-flashx"
+  // Vision models (4.5)
+  | "glm-4.5v"
   // Reasoning Models
   | "glm-z1-air"
   | "glm-z1-airx"
@@ -40,36 +46,169 @@ export type ZhipuChatModelId =
 
 /**
  * Thinking mode configuration for GLM-4.5+ models.
- * Enables deep reasoning capabilities for complex tasks.
+ * Controls chain-of-thought deep reasoning capabilities.
+ *
+ * @see https://docs.z.ai/guides/capabilities/thinking
+ * @see https://docs.z.ai/guides/capabilities/thinking-mode
  */
 export interface ZhipuThinkingConfig {
   /**
    * Enable or disable thinking mode.
-   * - "enabled": Model will use deep reasoning before responding
-   * - "disabled": Standard response without explicit reasoning
+   * - `"enabled"` (default for GLM-5, GLM-4.7): Model uses deep reasoning before responding.
+   *    GLM-4.6 and GLM-4.5 will automatically determine if thinking is needed.
+   * - `"disabled"`: Standard response without explicit reasoning.
    */
   type: "enabled" | "disabled";
   /**
-   * Whether to clear thinking content from previous turns.
-   * When true, previous reasoning is not retained in context.
+   * Whether to clear thinking content from previous turns (Preserved Thinking).
+   *
+   * - `true` (default): Previous reasoning is not retained in context.
+   * - `false`: Reasoning content from previous assistant turns is preserved,
+   *   improving continuity and increasing cache hit rates in multi-turn conversations.
+   *
+   * Only applicable when `type` is `"enabled"`.
+   *
    * @default true
+   * @see https://docs.z.ai/guides/capabilities/thinking-mode
    */
   clearThinking?: boolean;
 }
 
+/**
+ * Zhipu-specific provider options passed via `providerOptions.zhipu`.
+ * These are sent directly to the Zhipu API as body parameters.
+ *
+ * @example
+ * ```ts
+ * const result = await generateText({
+ *   model: zhipu("glm-4.7"),
+ *   prompt: "Explain quantum computing",
+ *   providerOptions: {
+ *     zhipu: {
+ *       temperature: 0.7,
+ *       top_p: 0.9,
+ *       max_tokens: 4096,
+ *       thinking: { type: "enabled", clear_thinking: false },
+ *     },
+ *   },
+ * });
+ * ```
+ *
+ * @see https://docs.z.ai/guides/overview/concept-param
+ */
+export interface ZhipuProviderOptions {
+  /**
+   * Controls the randomness of the model's output.
+   * - Lower values (e.g., 0.2): More deterministic and conservative output.
+   * - Higher values (e.g., 0.8): More random and diverse output.
+   *
+   * It is recommended to use only one of `temperature` and `top_p`.
+   */
+  temperature?: number;
+
+  /**
+   * Controls diversity through nucleus sampling.
+   * Samples from the smallest set of tokens whose cumulative probability exceeds this threshold.
+   * - Lower values (e.g., 0.2): More deterministic output.
+   * - Higher values (e.g., 0.9): More diverse output.
+   *
+   * It is recommended to use only one of `temperature` and `top_p`.
+   */
+  top_p?: number;
+
+  /**
+   * Maximum number of tokens to generate in a single call.
+   * This limits the length of generated content, not including input.
+   *
+   * Default and maximum values vary by model:
+   * - GLM-5/4.7/4.6: default 65536, max 131072
+   * - GLM-4.5 series: default 65536, max 98304
+   * - GLM-4.6v/4.5v: default 16384, max 32768/16384
+   * - GLM-4-32B: default 16384, max 16384
+   *
+   * @see https://docs.z.ai/guides/overview/concept-param#max_tokens
+   */
+  max_tokens?: number;
+
+  /**
+   * Whether to sample the output to increase diversity.
+   * - `true` (default): Performs random sampling based on token probability distribution.
+   * - `false`: Uses greedy strategy, always selecting the highest probability token.
+   *
+   * When `false`, `temperature` and `top_p` will not take effect.
+   */
+  do_sample?: boolean;
+
+  /**
+   * Thinking mode configuration for GLM-4.5+ models.
+   * Controls chain-of-thought deep reasoning.
+   *
+   * @example
+   * ```json
+   * { "type": "enabled", "clear_thinking": false }
+   * ```
+   *
+   * @see https://docs.z.ai/guides/capabilities/thinking
+   */
+  thinking?: {
+    /**
+     * - `"enabled"`: Enable chain-of-thought reasoning (default for GLM-5, GLM-4.7).
+     * - `"disabled"`: Disable reasoning for faster responses.
+     */
+    type: "enabled" | "disabled";
+    /**
+     * Whether to clear thinking content from previous turns.
+     * Set to `false` to enable Preserved Thinking (retains reasoning across turns).
+     * @default true
+     */
+    clear_thinking?: boolean;
+  };
+
+  /**
+   * Stop sequences. When the model generates one of these strings, it will stop.
+   * Zhipu API supports at most 1 stop sequence.
+   */
+  stop?: string[];
+
+  /**
+   * The unique ID of the end user. Helps the platform with abuse detection.
+   * Length: 6–128 characters.
+   */
+  user_id?: string;
+
+  /**
+   * The unique ID of the request. Must be unique per call.
+   * The platform generates one by default if not provided.
+   */
+  request_id?: string;
+
+  /**
+   * Enable streaming tool calls for GLM-4.6 models.
+   * When enabled, tool calls are streamed incrementally.
+   */
+  tool_stream?: boolean;
+
+  /**
+   * Additional key-value pairs to pass through to the API body.
+   * Use this for any new or undocumented parameters.
+   */
+  [key: string]: unknown;
+}
+
 export interface ZhipuChatSettings {
   /**
-   * The unique ID of the end user, helps the platform intervene in illegal activities, generate illegal or improper information, or other abuse by the end user.
-   * ID length requirement: at least 6 characters, up to 128 characters.
+   * The unique ID of the end user. Helps the platform with abuse detection.
+   * Length: 6–128 characters.
    */
   userId?: string;
   /**
-   * The unique ID of the request, passed by the user side, must be unique;
-   * The platform will generate one by default if not provided by the user side.
+   * The unique ID of the request, passed by the user side, must be unique.
+   * The platform will generate one by default if not provided.
    */
   requestId?: string;
   /**
-   * When do_sample is true, sampling strategy is enabled, when do_sample is false, the sampling strategy temperature, top_p will not take effect
+   * Whether to sample the output to increase diversity.
+   * When `false`, temperature and top_p will not take effect.
    */
   doSample?: boolean;
   /**
@@ -77,7 +216,7 @@ export interface ZhipuChatSettings {
    * When enabled, the model will perform deep reasoning before responding,
    * which improves performance on complex tasks like coding and multi-step reasoning.
    *
-   * @see https://docs.z.ai/guides/llm/glm-4.7
+   * @see https://docs.z.ai/guides/capabilities/thinking
    */
   thinking?: ZhipuThinkingConfig;
 }
