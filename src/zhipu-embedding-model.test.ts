@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { EmbeddingModelV2Embedding } from "@ai-sdk/provider";
+import { EmbeddingModelV3Embedding } from "@ai-sdk/provider";
 import { createZhipu } from "./zhipu-provider";
 import { createTestServer } from "./test-server";
 
@@ -24,7 +24,7 @@ describe("doEmbed", () => {
     usage = { prompt_tokens: 8, total_tokens: 8 },
     headers,
   }: {
-    embeddings?: EmbeddingModelV2Embedding[];
+    embeddings?: EmbeddingModelV3Embedding[];
     usage?: { prompt_tokens: number; total_tokens: number };
     headers?: Record<string, string>;
   } = {}) {

@@ -1,11 +1,11 @@
 import {
   InvalidResponseDataError,
-  LanguageModelV2,
-  LanguageModelV2CallWarning,
-  LanguageModelV2Content,
-  LanguageModelV2FinishReason,
-  LanguageModelV2StreamPart,
-  LanguageModelV2Usage,
+  LanguageModelV3,
+  LanguageModelV3Content,
+  LanguageModelV3FinishReason,
+  LanguageModelV3StreamPart,
+  LanguageModelV3Usage,
+  SharedV3Warning,
 } from "@ai-sdk/provider";
 import {
   isParsableJson,
@@ -33,8 +33,8 @@ type ZhipuChatConfig = {
   fetch?: FetchFunction;
 };
 
-export class ZhipuChatLanguageModel implements LanguageModelV2 {
-  readonly specificationVersion = "v2" as const;
+export class ZhipuChatLanguageModel implements LanguageModelV3 {
+  readonly specificationVersion = "v3" as const;
   readonly defaultObjectGenerationMode = "json";
   readonly supportedUrls: Record<string, RegExp[]> = {
     "image/*": [/^data:image\/[a-zA-Z]+;base64,/, /^https?:\/\/.+$/i],
@@ -90,10 +90,10 @@ export class ZhipuChatLanguageModel implements LanguageModelV2 {
     seed,
     tools,
     toolChoice,
-  }: Parameters<LanguageModelV2["doGenerate"]>[0]) {
+  }: Parameters<LanguageModelV3["doGenerate"]>[0]) {
     // const type = mode.type;
 
-    const warnings: LanguageModelV2CallWarning[] = [];
+    const warnings: SharedV3Warning[] = [];
 
     if (
       !this.config.isMultiModel &&
@@ -111,45 +111,45 @@ export class ZhipuChatLanguageModel implements LanguageModelV2 {
 
     if (topK != null) {
       warnings.push({
-        type: "unsupported-setting",
-        setting: "topK",
+        type: "unsupported",
+        feature: "topK",
       });
     }
 
     if (frequencyPenalty != null) {
       warnings.push({
-        type: "unsupported-setting",
-        setting: "frequencyPenalty",
+        type: "unsupported",
+        feature: "frequencyPenalty",
       });
     }
 
     if (presencePenalty != null) {
       warnings.push({
-        type: "unsupported-setting",
-        setting: "presencePenalty",
+        type: "unsupported",
+        feature: "presencePenalty",
       });
     }
 
     if (stopSequences != null && this.config.isMultiModel) {
       warnings.push({
-        type: "unsupported-setting",
-        setting: "stopSequences",
+        type: "unsupported",
+        feature: "stopSequences",
         details: "Stop sequences are not supported for vision model",
       });
     }
 
     if (stopSequences != null && stopSequences.length > 1) {
       warnings.push({
-        type: "unsupported-setting",
-        setting: "stopSequences",
+        type: "unsupported",
+        feature: "stopSequences",
         details: "Only supports one stop sequence",
       });
     }
 
     if (seed != null) {
       warnings.push({
-        type: "unsupported-setting",
-        setting: "seed",
+        type: "unsupported",
+        feature: "seed",
       });
     }
 
@@ -159,8 +159,8 @@ export class ZhipuChatLanguageModel implements LanguageModelV2 {
       (this.config.isMultiModel || this.config.isReasoningModel)
     ) {
       warnings.push({
-        type: "unsupported-setting",
-        setting: "responseFormat",
+        type: "unsupported",
+        feature: "responseFormat",
         details:
           "JSON response format is not supported with vision and reasoning models.",
       });
@@ -168,8 +168,8 @@ export class ZhipuChatLanguageModel implements LanguageModelV2 {
 
     if (tools && tools.length > 0 && this.config.isMultiModel) {
       warnings.push({
-        type: "unsupported-setting",
-        setting: "tools",
+        type: "unsupported",
+        feature: "tools",
         details: "Tools are not supported with vision models.",
       });
     }
@@ -180,8 +180,8 @@ export class ZhipuChatLanguageModel implements LanguageModelV2 {
       tools.some((tool) => tool.type !== "function")
     ) {
       warnings.push({
-        type: "unsupported-setting",
-        setting: "tools",
+        type: "unsupported",
+        feature: "tools",
         details: "Provider-defined tools are not implemented",
       });
     }
@@ -192,8 +192,8 @@ export class ZhipuChatLanguageModel implements LanguageModelV2 {
       responseFormat.schema
     ) {
       warnings.push({
-        type: "unsupported-setting",
-        setting: "responseFormat",
+        type: "unsupported",
+        feature: "responseFormat",
         details:
           "Structured output with schema is not supported, use json response format instead.",
       });
@@ -201,8 +201,8 @@ export class ZhipuChatLanguageModel implements LanguageModelV2 {
 
     if (toolChoice?.type !== "auto") {
       warnings.push({
-        type: "unsupported-setting",
-        setting: "toolChoice",
+        type: "unsupported",
+        feature: "toolChoice",
         details: "Only 'auto' tool choice is supported",
       });
     }
@@ -262,8 +262,8 @@ export class ZhipuChatLanguageModel implements LanguageModelV2 {
   }
 
   async doGenerate(
-    options: Parameters<LanguageModelV2["doGenerate"]>[0],
-  ): Promise<Awaited<ReturnType<LanguageModelV2["doGenerate"]>>> {
+    options: Parameters<LanguageModelV3["doGenerate"]>[0],
+  ): Promise<Awaited<ReturnType<LanguageModelV3["doGenerate"]>>> {
     const { args, warnings } = this.getArgs(options);
 
     const providerOptions = options.providerOptions || {};
@@ -294,7 +294,7 @@ export class ZhipuChatLanguageModel implements LanguageModelV2 {
     const responseData = response as z.infer<typeof zhipuChatResponseSchema>;
     const choice = responseData.choices[0];
 
-    const content: LanguageModelV2Content[] = [];
+    const content: LanguageModelV3Content[] = [];
 
     // Extract text content
     const responseText = responseData.choices[0].message.content;
@@ -345,9 +345,22 @@ export class ZhipuChatLanguageModel implements LanguageModelV2 {
       content,
       finishReason: mapZhipuFinishReason(choice.finish_reason),
       usage: {
-        totalTokens: responseData.usage?.total_tokens ?? NaN,
-        inputTokens: responseData.usage.prompt_tokens,
-        outputTokens: responseData.usage.completion_tokens ?? NaN,
+        inputTokens: {
+          total: responseData.usage.prompt_tokens,
+          noCache: undefined,
+          cacheRead: undefined,
+          cacheWrite: undefined,
+        },
+        outputTokens: {
+          total: responseData.usage.completion_tokens ?? undefined,
+          text: undefined,
+          reasoning: undefined,
+        },
+        raw: {
+          prompt_tokens: responseData.usage.prompt_tokens,
+          completion_tokens: responseData.usage.completion_tokens ?? 0,
+          total_tokens: responseData.usage.total_tokens ?? 0,
+        },
       },
       request: { body: fullArgs },
       response: {
@@ -360,15 +373,14 @@ export class ZhipuChatLanguageModel implements LanguageModelV2 {
   }
 
   async doStream(
-    options: Parameters<LanguageModelV2["doStream"]>[0],
-  ): Promise<Awaited<ReturnType<LanguageModelV2["doStream"]>>> {
-    const { args } = this.getArgs(options);
+    options: Parameters<LanguageModelV3["doStream"]>[0],
+  ): Promise<Awaited<ReturnType<LanguageModelV3["doStream"]>>> {
+    const { args, warnings } = this.getArgs(options);
 
     const providerOptions = options.providerOptions || {};
     const zhipuOptions = providerOptions.zhipu || {};
 
     const body = { ...args, ...zhipuOptions, stream: true };
-    // const metadataExtractor = this.config.metadataExtractor?.createStreamExtractor();
 
     const { responseHeaders, value: response } = await postJsonToApi({
       url: `${this.config.baseURL}/chat/completions`,
@@ -381,8 +393,6 @@ export class ZhipuChatLanguageModel implements LanguageModelV2 {
       fetch: this.config.fetch,
     });
 
-    // const { messages: rawPrompt } = args;
-
     const toolCalls: Array<{
       id: string;
       type: "function";
@@ -393,11 +403,22 @@ export class ZhipuChatLanguageModel implements LanguageModelV2 {
       hasFinished: boolean;
     }> = [];
 
-    let finishReason: LanguageModelV2FinishReason = "unknown";
-    const usage: LanguageModelV2Usage = {
-      inputTokens: undefined,
-      outputTokens: undefined,
-      totalTokens: undefined,
+    let finishReason: LanguageModelV3FinishReason = {
+      unified: "other",
+      raw: undefined,
+    };
+    const usage: LanguageModelV3Usage = {
+      inputTokens: {
+        total: undefined,
+        noCache: undefined,
+        cacheRead: undefined,
+        cacheWrite: undefined,
+      },
+      outputTokens: {
+        total: undefined,
+        text: undefined,
+        reasoning: undefined,
+      },
     };
     let isFirstChunk = true;
     let isActiveReasoning = false;
@@ -407,7 +428,7 @@ export class ZhipuChatLanguageModel implements LanguageModelV2 {
       stream: response.pipeThrough(
         new TransformStream<
           ParseResult<z.infer<typeof zhipuChatChunkSchema>>,
-          LanguageModelV2StreamPart
+          LanguageModelV3StreamPart
         >({
           transform(chunk, controller) {
             // Emit raw chunk if requested (before anything else)
@@ -417,7 +438,7 @@ export class ZhipuChatLanguageModel implements LanguageModelV2 {
 
             // handle failed chunk parsing / validation:
             if (chunk.success == false) {
-              finishReason = "error";
+              finishReason = { unified: "error", raw: undefined };
               controller.enqueue({ type: "error", error: chunk.error });
               return;
             }
@@ -426,13 +447,18 @@ export class ZhipuChatLanguageModel implements LanguageModelV2 {
 
             // handle error chunks:
             if ("error" in value) {
-              finishReason = "error";
+              finishReason = { unified: "error", raw: undefined };
               controller.enqueue({ type: "error", error: value.error });
               return;
             }
 
             if (isFirstChunk) {
               isFirstChunk = false;
+
+              controller.enqueue({
+                type: "stream-start",
+                warnings,
+              });
 
               controller.enqueue({
                 type: "response-metadata",
@@ -446,9 +472,15 @@ export class ZhipuChatLanguageModel implements LanguageModelV2 {
             }
 
             if (value.usage != null) {
-              usage.inputTokens = value.usage.prompt_tokens ?? undefined;
-              usage.outputTokens = value.usage.completion_tokens ?? undefined;
-              usage.totalTokens = value.usage.total_tokens ?? undefined;
+              usage.inputTokens.total =
+                value.usage.prompt_tokens ?? undefined;
+              usage.outputTokens.total =
+                value.usage.completion_tokens ?? undefined;
+              usage.raw = {
+                prompt_tokens: value.usage.prompt_tokens ?? 0,
+                completion_tokens: value.usage.completion_tokens ?? 0,
+                total_tokens: value.usage.total_tokens ?? 0,
+              };
             }
 
             const choice = value.choices[0];

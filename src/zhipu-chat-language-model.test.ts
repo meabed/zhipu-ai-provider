@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { LanguageModelV2Prompt } from "@ai-sdk/provider";
+import { LanguageModelV3Prompt } from "@ai-sdk/provider";
 import { convertReadableStreamToArray } from "@ai-sdk/provider-utils/test";
 import { createZhipu } from "./zhipu-provider";
 import { createTestServer } from "./test-server";
@@ -17,7 +17,7 @@ type ZhipuRequestBody = {
   response_format?: { type: string };
 };
 
-const TEST_PROMPT: LanguageModelV2Prompt = [
+const TEST_PROMPT: LanguageModelV3Prompt = [
   { role: "user", content: [{ type: "text", text: "Hello" }] },
 ];
 
@@ -135,9 +135,22 @@ describe("doGenerate", () => {
     });
 
     expect(usage).toStrictEqual({
-      inputTokens: 20,
-      outputTokens: 5,
-      totalTokens: 25,
+      inputTokens: {
+        total: 20,
+        noCache: undefined,
+        cacheRead: undefined,
+        cacheWrite: undefined,
+      },
+      outputTokens: {
+        total: 5,
+        text: undefined,
+        reasoning: undefined,
+      },
+      raw: {
+        prompt_tokens: 20,
+        completion_tokens: 5,
+        total_tokens: 25,
+      },
     });
   });
 
@@ -183,9 +196,22 @@ describe("doGenerate", () => {
     });
 
     expect(usage).toStrictEqual({
-      inputTokens: 20,
-      outputTokens: NaN,
-      totalTokens: 20,
+      inputTokens: {
+        total: 20,
+        noCache: undefined,
+        cacheRead: undefined,
+        cacheWrite: undefined,
+      },
+      outputTokens: {
+        total: undefined,
+        text: undefined,
+        reasoning: undefined,
+      },
+      raw: {
+        prompt_tokens: 20,
+        completion_tokens: 0,
+        total_tokens: 20,
+      },
     });
   });
 
@@ -199,7 +225,7 @@ describe("doGenerate", () => {
       prompt: TEST_PROMPT,
     });
 
-    expect(response.finishReason).toStrictEqual("stop");
+    expect(response.finishReason).toStrictEqual({ unified: "stop", raw: "stop" });
   });
 
   it("should support unknown finish reason", async () => {
@@ -212,7 +238,7 @@ describe("doGenerate", () => {
       prompt: TEST_PROMPT,
     });
 
-    expect(response.finishReason).toStrictEqual("unknown");
+    expect(response.finishReason).toStrictEqual({ unified: "other", raw: "eos" });
   });
 
   it("should expose the raw response headers", async () => {
@@ -493,6 +519,12 @@ describe("doStream", () => {
     // Check key elements exist
     expect(result).toContainEqual(
       expect.objectContaining({
+        type: "stream-start",
+      }),
+    );
+
+    expect(result).toContainEqual(
+      expect.objectContaining({
         type: "response-metadata",
       }),
     );
@@ -500,11 +532,24 @@ describe("doStream", () => {
     expect(result).toContainEqual(
       expect.objectContaining({
         type: "finish",
-        finishReason: "stop",
+        finishReason: { unified: "stop", raw: "stop" },
         usage: {
-          inputTokens: 18,
-          outputTokens: 439,
-          totalTokens: 457,
+          inputTokens: {
+            total: 18,
+            noCache: undefined,
+            cacheRead: undefined,
+            cacheWrite: undefined,
+          },
+          outputTokens: {
+            total: 439,
+            text: undefined,
+            reasoning: undefined,
+          },
+          raw: {
+            prompt_tokens: 18,
+            completion_tokens: 439,
+            total_tokens: 457,
+          },
         },
       }),
     );
@@ -786,7 +831,7 @@ describe("doStream", () => {
     expect(elements.length).toBe(2);
     expect(elements[0].type).toBe("error");
     expect(elements[1]).toMatchObject({
-      finishReason: "error",
+      finishReason: { unified: "error", raw: undefined },
       type: "finish",
     });
   });

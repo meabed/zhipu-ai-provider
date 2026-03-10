@@ -1,0 +1,382 @@
+================================================================================
+AI SDK v6 - EXACT V3 INTERFACES SUMMARY
+================================================================================
+
+Package Locations:
+- Main: /node_modules/@ai-sdk/provider/dist/index.d.ts
+- Utils: /node_modules/@ai-sdk/provider-utils/dist/index.d.ts
+
+================================================================================
+1. LANGUAGE MODEL V3 (Primary Interface)
+================================================================================
+
+type LanguageModelV3 = {
+    readonly specificationVersion: 'v3';
+    readonly provider: string;
+    readonly modelId: string;
+    supportedUrls: PromiseLike<Record<string, RegExp[]>> | Record<string, RegExp[]>;
+    doGenerate(options: LanguageModelV3CallOptions): PromiseLike<LanguageModelV3GenerateResult>;
+    doStream(options: LanguageModelV3CallOptions): PromiseLike<LanguageModelV3StreamResult>;
+};
+
+type LanguageModelV3CallOptions = {
+    prompt: LanguageModelV3Prompt;
+    maxOutputTokens?: number;
+    temperature?: number;
+    stopSequences?: string[];
+    topP?: number;
+    topK?: number;
+    presencePenalty?: number;
+    frequencyPenalty?: number;
+    responseFormat?: { type: 'text' } | { type: 'json'; schema?: JSONSchema7; name?: string; description?: string };
+    seed?: number;
+    tools?: Array<LanguageModelV3FunctionTool | LanguageModelV3ProviderTool>;
+    toolChoice?: LanguageModelV3ToolChoice;
+    includeRawChunks?: boolean;
+    abortSignal?: AbortSignal;
+    headers?: Record<string, string | undefined>;
+    providerOptions?: SharedV3ProviderOptions;
+};
+
+type LanguageModelV3Prompt = Array<LanguageModelV3Message>;
+
+type LanguageModelV3Message = ({
+    role: 'system' | 'user' | 'assistant' | 'tool';
+    content: string | Array<MessagePart>;
+} & { providerOptions?: SharedV3ProviderOptions });
+
+type LanguageModelV3GenerateResult = {
+    content: Array<LanguageModelV3Content>;
+    finishReason: LanguageModelV3FinishReason;
+    usage: LanguageModelV3Usage;
+    providerMetadata?: SharedV3ProviderMetadata;
+    request?: { body?: unknown };
+    response?: LanguageModelV3ResponseMetadata & { headers?: SharedV3Headers; body?: unknown };
+    warnings: Array<SharedV3Warning>;
+};
+
+type LanguageModelV3StreamResult = {
+    stream: ReadableStream<LanguageModelV3StreamPart>;
+    request?: { body?: unknown };
+    response?: { headers?: SharedV3Headers };
+};
+
+type LanguageModelV3FinishReason = {
+    unified: 'stop' | 'length' | 'content-filter' | 'tool-calls' | 'error' | 'other';
+    raw: string | undefined;
+};
+
+type LanguageModelV3Usage = {
+    inputTokens: {
+        total: number | undefined;
+        noCache: number | undefined;
+        cacheRead: number | undefined;
+        cacheWrite: number | undefined;
+    };
+    outputTokens: {
+        total: number | undefined;
+        text: number | undefined;
+        reasoning: number | undefined;
+    };
+    raw?: JSONObject;
+};
+
+type LanguageModelV3Content = 
+    | LanguageModelV3Text 
+    | LanguageModelV3Reasoning 
+    | LanguageModelV3File 
+    | LanguageModelV3ToolApprovalRequest 
+    | LanguageModelV3Source 
+    | LanguageModelV3ToolCall 
+    | LanguageModelV3ToolResult;
+
+================================================================================
+2. TOOLS - V3
+================================================================================
+
+type LanguageModelV3FunctionTool = {
+    type: 'function';
+    name: string;
+    description?: string;
+    inputSchema: JSONSchema7;
+    inputExamples?: Array<{ input: JSONObject }>;
+    strict?: boolean;
+    providerOptions?: SharedV3ProviderOptions;
+};
+
+type LanguageModelV3ProviderTool = {
+    type: 'provider';
+    id: `${string}.${string}`;
+    name: string;
+    args: Record<string, unknown>;
+};
+
+type LanguageModelV3ToolChoice = 
+    | { type: 'auto' } 
+    | { type: 'none' } 
+    | { type: 'required' } 
+    | { type: 'tool'; toolName: string };
+
+type LanguageModelV3ToolCall = {
+    type: 'tool-call';
+    toolCallId: string;
+    toolName: string;
+    input: string;  // Stringified JSON
+    providerExecuted?: boolean;
+    dynamic?: boolean;
+    providerMetadata?: SharedV3ProviderMetadata;
+};
+
+type LanguageModelV3ToolResult = {
+    type: 'tool-result';
+    toolCallId: string;
+    toolName: string;
+    result: NonNullable<JSONValue>;
+    isError?: boolean;
+    preliminary?: boolean;
+    dynamic?: boolean;
+    providerMetadata?: SharedV3ProviderMetadata;
+};
+
+type LanguageModelV3ToolApprovalRequest = {
+    type: 'tool-approval-request';
+    approvalId: string;
+    toolCallId: string;
+    providerMetadata?: SharedV3ProviderMetadata;
+};
+
+================================================================================
+3. EMBEDDING MODEL V3
+================================================================================
+
+type EmbeddingModelV3 = {
+    readonly specificationVersion: 'v3';
+    readonly provider: string;
+    readonly modelId: string;
+    readonly maxEmbeddingsPerCall: PromiseLike<number | undefined> | number | undefined;
+    readonly supportsParallelCalls: PromiseLike<boolean> | boolean;
+    doEmbed(options: EmbeddingModelV3CallOptions): PromiseLike<EmbeddingModelV3Result>;
+};
+
+type EmbeddingModelV3CallOptions = {
+    values: Array<string>;
+    abortSignal?: AbortSignal;
+    providerOptions?: SharedV3ProviderOptions;
+    headers?: SharedV3Headers;
+};
+
+type EmbeddingModelV3Result = {
+    embeddings: Array<Array<number>>;
+    usage?: { tokens: number };
+    providerMetadata?: SharedV3ProviderMetadata;
+    response?: { headers?: SharedV3Headers; body?: unknown };
+    warnings: Array<SharedV3Warning>;
+};
+
+================================================================================
+4. IMAGE MODEL V3
+================================================================================
+
+type ImageModelV3 = {
+    readonly specificationVersion: 'v3';
+    readonly provider: string;
+    readonly modelId: string;
+    readonly maxImagesPerCall: number | undefined | GetMaxImagesPerCallFunction;
+    doGenerate(options: ImageModelV3CallOptions): PromiseLike<{
+        images: Array<string> | Array<Uint8Array>;
+        warnings: Array<SharedV3Warning>;
+        providerMetadata?: ImageModelV3ProviderMetadata;
+        response: { timestamp: Date; modelId: string; headers: Record<string, string> | undefined };
+        usage?: ImageModelV3Usage;
+    }>;
+};
+
+type ImageModelV3CallOptions = {
+    prompt: string | undefined;
+    n: number;
+    size: `${number}x${number}` | undefined;
+    aspectRatio: `${number}:${number}` | undefined;
+    seed: number | undefined;
+    files: Array<ImageModelV3File> | undefined;
+    mask: ImageModelV3File | undefined;
+    providerOptions: SharedV3ProviderOptions;
+    abortSignal?: AbortSignal;
+    headers?: Record<string, string | undefined>;
+};
+
+type ImageModelV3File = 
+    | { type: 'file'; mediaType: string; data: string | Uint8Array; providerOptions?: SharedV3ProviderMetadata }
+    | { type: 'url'; url: string; providerOptions?: SharedV3ProviderMetadata };
+
+================================================================================
+5. PROVIDER V3
+================================================================================
+
+interface ProviderV3 {
+    readonly specificationVersion: 'v3';
+    languageModel(modelId: string): LanguageModelV3;
+    embeddingModel(modelId: string): EmbeddingModelV3;
+    textEmbeddingModel?(modelId: string): EmbeddingModelV3;  // deprecated
+    imageModel(modelId: string): ImageModelV3;
+    transcriptionModel?(modelId: string): TranscriptionModelV3;
+    speechModel?(modelId: string): SpeechModelV3;
+    rerankingModel?(modelId: string): RerankingModelV3;
+}
+
+================================================================================
+6. MIDDLEWARE V3
+================================================================================
+
+type LanguageModelV3Middleware = {
+    readonly specificationVersion: 'v3';
+    overrideProvider?(options: { model: LanguageModelV3 }): string;
+    overrideModelId?(options: { model: LanguageModelV3 }): string;
+    overrideSupportedUrls?(options: { model: LanguageModelV3 }): PromiseLike<Record<string, RegExp[]>> | Record<string, RegExp[]>;
+    transformParams?(options: {
+        type: 'generate' | 'stream';
+        params: LanguageModelV3CallOptions;
+        model: LanguageModelV3;
+    }): PromiseLike<LanguageModelV3CallOptions>;
+    wrapGenerate?(options: {
+        doGenerate: () => PromiseLike<LanguageModelV3GenerateResult>;
+        doStream: () => PromiseLike<LanguageModelV3StreamResult>;
+        params: LanguageModelV3CallOptions;
+        model: LanguageModelV3;
+    }): PromiseLike<LanguageModelV3GenerateResult>;
+    wrapStream?(options: {
+        doGenerate: () => PromiseLike<LanguageModelV3GenerateResult>;
+        doStream: () => PromiseLike<LanguageModelV3StreamResult>;
+        params: LanguageModelV3CallOptions;
+        model: LanguageModelV3;
+    }): PromiseLike<LanguageModelV3StreamResult>;
+};
+
+================================================================================
+7. PROVIDER UTILITIES (provider-utils)
+================================================================================
+
+Key Functions:
+
+declare const createJsonResponseHandler: <T>(
+    responseSchema: FlexibleSchema<T>
+) => ResponseHandler<T>;
+
+declare const createEventSourceResponseHandler: <T>(
+    chunkSchema: FlexibleSchema<T>
+) => ResponseHandler<ReadableStream<ParseResult<T>>>;
+
+declare const createJsonErrorResponseHandler: <T>({
+    errorSchema,
+    errorToMessage,
+    isRetryable,
+}: {
+    errorSchema: FlexibleSchema<T>;
+    errorToMessage: (error: T) => string;
+    isRetryable?: (response: Response, error?: T) => boolean;
+}) => ResponseHandler<APICallError>;
+
+declare const postJsonToApi: <T>({
+    url,
+    headers,
+    body,
+    failedResponseHandler,
+    successfulResponseHandler,
+    abortSignal,
+    fetch,
+}: {
+    url: string;
+    headers?: Record<string, string | undefined>;
+    body: unknown;
+    failedResponseHandler: ResponseHandler<APICallError>;
+    successfulResponseHandler: ResponseHandler<T>;
+    abortSignal?: AbortSignal;
+    fetch?: FetchFunction;
+}) => Promise<{
+    value: T;
+    rawValue?: unknown;
+    responseHeaders?: Record<string, string>;
+}>;
+
+declare const getFromApi: <T>({...}) => Promise<{...}>;
+
+declare const postFormDataToApi: <T>({...}) => Promise<{...}>;
+
+declare const createBinaryResponseHandler: () => ResponseHandler<Uint8Array>;
+
+declare const createStatusCodeErrorResponseHandler: () => ResponseHandler<APICallError>;
+
+Other Utilities Exported:
+- parseJsonEventStream
+- parseJSON
+- safeParseJSON
+- loadApiKey, loadSetting, loadOptionalSetting
+- validateTypes, safeValidateTypes
+- convertToBase64, convertUint8ArrayToBase64
+- convertImageModelFileToDataUri
+- downloadBlob
+- normalizeHeaders, combineHeaders
+- withUserAgentSuffix, getRuntimeEnvironmentUserAgent
+- And many more...
+
+================================================================================
+8. KEY V2 vs V3 DIFFERENCES
+================================================================================
+
+FINISH REASON:
+  V2: 'stop' | 'length' | 'content-filter' | 'tool-calls' | 'error' | 'other' | 'unknown'
+  V3: { unified: '...'; raw: string | undefined }
+
+USAGE:
+  V2: { inputTokens: number | undefined; outputTokens: number | undefined; totalTokens: number | undefined; reasoningTokens?: number; cachedInputTokens?: number }
+  V3: { inputTokens: { total, noCache, cacheRead, cacheWrite }; outputTokens: { total, text, reasoning }; raw?: JSONObject }
+
+TOOLS:
+  V2: FunctionTool | ProviderDefinedTool
+  V3: FunctionTool | ProviderTool (with support for tool approval requests and dynamic tools)
+
+CONTENT:
+  V2: Text | Reasoning | File | Source | ToolCall | ToolResult
+  V3: Text | Reasoning | File | ToolApprovalRequest | Source | ToolCall | ToolResult
+
+TOOL MESSAGES:
+  V2: role: 'tool' with ToolResultPart[]
+  V3: role: 'tool' with (ToolResultPart | ToolApprovalResponsePart)[]
+
+WARNINGS:
+  V2: Array<LanguageModelV2CallWarning>
+  V3: Array<SharedV3Warning>
+
+================================================================================
+9. IMPORTANT NOTES
+================================================================================
+
+1. V3 tools can be either 'function' or 'provider' type
+   - 'provider' tools follow format: provider-id.tool-name
+   - Used for MCP (Model Context Protocol) and other provider-native tools
+
+2. Tool approval requests (V3 only) allow models to request user approval before execution
+   - LanguageModelV3ToolApprovalRequest has approvalId and toolCallId
+
+3. Dynamic tools (V3 only) are defined at runtime, not pre-declared
+   - Important for MCP and provider-controlled tool definitions
+
+4. Preliminary tool results (V3 only) can be replaced
+   - Used for progressive rendering or intermediate results
+
+5. Supported URLs pattern matching is required
+   - Helps optimize file downloads vs native URL handling
+
+6. All tokens structures in V3 are more detailed with separate tracking
+   - Cache-related token counts
+   - Reasoning token counts
+   - Non-cached token counts
+
+7. Response metadata structure improved in V3
+   - Includes timestamp, modelId, headers
+   - Supports debugging and telemetry
+
+8. Provider options are strictly typed per provider
+   - SharedV3ProviderOptions vs SharedV2ProviderOptions
+   - Enables type-safe provider-specific configurations
+
+================================================================================

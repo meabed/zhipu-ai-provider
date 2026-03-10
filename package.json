@@ -54,13 +54,13 @@
   "publishConfig": {
     "access": "public"
   },
-  "homepage": "https://github.com/Xiang-CH/zhipu-ai-provider",
+  "homepage": "https://github.com/meabed/zhipu-ai-provider",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Xiang-CH/zhipu-ai-provider.git"
+    "url": "git+https://github.com/meabed/zhipu-ai-provider.git"
   },
   "bugs": {
-    "url": "https://github.com/Xiang-CH/zhipu-ai-provider/issues"
+    "url": "https://github.com/meabed/zhipu-ai-provider/issues"
   },
   "keywords": [
     "zhipu",

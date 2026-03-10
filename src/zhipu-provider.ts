@@ -1,7 +1,7 @@
 import {
-  EmbeddingModelV2,
-  LanguageModelV2,
-  ProviderV2,
+  EmbeddingModelV3,
+  LanguageModelV3,
+  ProviderV3,
 } from "@ai-sdk/provider";
 import {
   FetchFunction,
@@ -18,8 +18,8 @@ import {
   ZhipuEmbeddingSettings,
 } from "./zhipu-embedding-settings";
 
-export interface ZhipuProvider extends ProviderV2 {
-  (modelId: ZhipuChatModelId, settings?: ZhipuChatSettings): LanguageModelV2;
+export interface ZhipuProvider extends ProviderV3 {
+  (modelId: ZhipuChatModelId, settings?: ZhipuChatSettings): LanguageModelV3;
 
   /**
 Creates a model for text generation.
@@ -27,7 +27,7 @@ Creates a model for text generation.
   languageModel(
     modelId: ZhipuChatModelId,
     settings?: ZhipuChatSettings,
-  ): LanguageModelV2;
+  ): LanguageModelV3;
 
   /**
 Creates a model for text generation.
@@ -35,19 +35,7 @@ Creates a model for text generation.
   chat(
     modelId: ZhipuChatModelId,
     settings?: ZhipuChatSettings,
-  ): LanguageModelV2;
-
-  // Note: Both `textEmbeddingModel` (v5) and `embeddingModel` (v6) are supported for
-  // backward compatibility. `textEmbeddingModel` was renamed in AI SDK v6.
-
-  /**
-Creates a model for text embedding.
-@deprecated Use `embeddingModel` instead. Kept for AI SDK v5 compatibility.
-*/
-  textEmbeddingModel: (
-    modelId: ZhipuEmbeddingModelId,
-    settings?: ZhipuEmbeddingSettings,
-  ) => EmbeddingModelV2<string>;
+  ): LanguageModelV3;
 
   /**
 Creates a model for text embedding.
@@ -55,7 +43,16 @@ Creates a model for text embedding.
   embeddingModel: (
     modelId: ZhipuEmbeddingModelId,
     settings?: ZhipuEmbeddingSettings,
-  ) => EmbeddingModelV2<string>;
+  ) => EmbeddingModelV3;
+
+  /**
+Creates a model for text embedding.
+@deprecated Use `embeddingModel` instead.
+*/
+  textEmbeddingModel?: (
+    modelId: ZhipuEmbeddingModelId,
+    settings?: ZhipuEmbeddingSettings,
+  ) => EmbeddingModelV3;
 }
 
 export interface ZhipuProviderSettings {
@@ -148,6 +145,7 @@ export function createZhipu(
     return createChatModel(modelId, settings);
   };
 
+  provider.specificationVersion = "v3" as const;
   provider.languageModel = createChatModel;
   provider.chat = createChatModel;
 

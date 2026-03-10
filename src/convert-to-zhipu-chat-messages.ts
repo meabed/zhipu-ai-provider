@@ -1,12 +1,12 @@
 import {
-  LanguageModelV2Prompt,
+  LanguageModelV3Prompt,
   UnsupportedFunctionalityError,
 } from "@ai-sdk/provider";
 import { convertUint8ArrayToBase64 } from "@ai-sdk/provider-utils";
 import { ZhipuPrompt } from "./zhipu-chat-prompt";
 
 export function convertToZhipuChatMessages(
-  prompt: LanguageModelV2Prompt,
+  prompt: LanguageModelV3Prompt,
 ): ZhipuPrompt {
   const messages: ZhipuPrompt = [];
 
@@ -125,6 +125,10 @@ export function convertToZhipuChatMessages(
 
       case "tool": {
         for (const toolResponse of content) {
+          if (toolResponse.type === "tool-approval-response") {
+            continue; // skip approval responses, not supported by Zhipu
+          }
+
           const output = toolResponse.output;
 
           let contentValue: string;
@@ -137,6 +141,9 @@ export function convertToZhipuChatMessages(
             case "json":
             case "error-json":
               contentValue = JSON.stringify(output.value);
+              break;
+            case "execution-denied":
+              contentValue = output.reason ?? "Execution denied";
               break;
           }
 

@@ -1,5 +1,5 @@
 import {
-  EmbeddingModelV2,
+  EmbeddingModelV3,
   TooManyEmbeddingValuesForCallError,
 } from "@ai-sdk/provider";
 import {
@@ -32,8 +32,8 @@ type ZhipuEmbeddingConfig = {
   fetch?: FetchFunction;
 };
 
-export class ZhipuEmbeddingModel implements EmbeddingModelV2<string> {
-  readonly specificationVersion = "v2" as const;
+export class ZhipuEmbeddingModel implements EmbeddingModelV3 {
+  readonly specificationVersion = "v3" as const;
   readonly modelId: ZhipuEmbeddingModelId;
 
   private readonly config: ZhipuEmbeddingConfig;
@@ -65,8 +65,8 @@ export class ZhipuEmbeddingModel implements EmbeddingModelV2<string> {
     values,
     abortSignal,
     headers,
-  }: Parameters<EmbeddingModelV2<string>["doEmbed"]>[0]): Promise<
-    Awaited<ReturnType<EmbeddingModelV2<string>["doEmbed"]>>
+  }: Parameters<EmbeddingModelV3["doEmbed"]>[0]): Promise<
+    Awaited<ReturnType<EmbeddingModelV3["doEmbed"]>>
   > {
     if (values.length > this.maxEmbeddingsPerCall) {
       throw new TooManyEmbeddingValuesForCallError({
@@ -103,6 +103,7 @@ export class ZhipuEmbeddingModel implements EmbeddingModelV2<string> {
         ? { tokens: typedResponse.usage.prompt_tokens }
         : undefined,
       response: { headers: responseHeaders },
+      warnings: [],
     };
   }
 }
