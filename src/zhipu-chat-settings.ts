@@ -1,6 +1,20 @@
-// https://bigmodel.cn/dev/howuse/model
+// https://docs.z.ai/api-reference/llm/chat-completion
 export type ZhipuChatModelId =
-  // Language models
+  // Flagship models
+  | "glm-5"
+  // GLM-4.7 series
+  | "glm-4.7"
+  | "glm-4.7-flash"
+  | "glm-4.7-flashx"
+  // GLM-4.6 series
+  | "glm-4.6"
+  // GLM-4.5 series
+  | "glm-4.5"
+  | "glm-4.5-air"
+  | "glm-4.5-x"
+  | "glm-4.5-airx"
+  | "glm-4.5-flash"
+  // GLM-4 series
   | "glm-4-plus"
   | "glm-4-air-250414"
   | "glm-4-air"
@@ -9,6 +23,7 @@ export type ZhipuChatModelId =
   | "glm-4-flash"
   | "glm-4-flash-250414"
   | "glm-4-flashx"
+  | "glm-4-32b-0414-128k"
   // Vision/Video Models
   | "glm-4v-plus-0111"
   | "glm-4v-plus"
@@ -37,7 +52,7 @@ export interface ZhipuThinkingConfig {
   /**
    * Whether to clear thinking content from previous turns.
    * When true, previous reasoning is not retained in context.
-   * @default false
+   * @default true
    */
   clearThinking?: boolean;
 }

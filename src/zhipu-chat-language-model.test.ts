@@ -67,6 +67,12 @@ describe("doGenerate", () => {
       prompt_tokens?: number;
       total_tokens?: number;
       completion_tokens?: number;
+      prompt_tokens_details?: {
+        cached_tokens?: number;
+      };
+      completion_tokens_details?: {
+        reasoning_tokens?: number;
+      };
     };
     finish_reason?: string;
     created?: number;
@@ -137,13 +143,13 @@ describe("doGenerate", () => {
     expect(usage).toStrictEqual({
       inputTokens: {
         total: 20,
-        noCache: undefined,
+        noCache: 20,
         cacheRead: undefined,
         cacheWrite: undefined,
       },
       outputTokens: {
         total: 5,
-        text: undefined,
+        text: 5,
         reasoning: undefined,
       },
       raw: {
@@ -198,19 +204,64 @@ describe("doGenerate", () => {
     expect(usage).toStrictEqual({
       inputTokens: {
         total: 20,
-        noCache: undefined,
+        noCache: 20,
         cacheRead: undefined,
         cacheWrite: undefined,
       },
       outputTokens: {
-        total: undefined,
-        text: undefined,
+        total: 0,
+        text: 0,
         reasoning: undefined,
       },
       raw: {
         prompt_tokens: 20,
-        completion_tokens: 0,
         total_tokens: 20,
+      },
+    });
+  });
+
+  it("should account for cached tokens and reasoning tokens", async () => {
+    prepareJsonResponse({
+      content: "",
+      usage: {
+        prompt_tokens: 100,
+        total_tokens: 150,
+        completion_tokens: 50,
+        prompt_tokens_details: {
+          cached_tokens: 60,
+        },
+        completion_tokens_details: {
+          reasoning_tokens: 20,
+        },
+      },
+    });
+
+    const { usage } = await model.doGenerate({
+      prompt: TEST_PROMPT,
+    });
+
+    expect(usage).toStrictEqual({
+      inputTokens: {
+        total: 100,
+        noCache: 40,
+        cacheRead: 60,
+        cacheWrite: undefined,
+      },
+      outputTokens: {
+        total: 50,
+        text: 30,
+        reasoning: 20,
+      },
+      raw: {
+        prompt_tokens: 100,
+        completion_tokens: 50,
+        total_tokens: 150,
+        prompt_tokens_details: {
+          cached_tokens: 60,
+        },
+        completion_tokens_details: {
+          reasoning_tokens: 20,
+        },
       },
     });
   });
@@ -536,13 +587,13 @@ describe("doStream", () => {
         usage: {
           inputTokens: {
             total: 18,
-            noCache: undefined,
+            noCache: 18,
             cacheRead: undefined,
             cacheWrite: undefined,
           },
           outputTokens: {
             total: 439,
-            text: undefined,
+            text: 439,
             reasoning: undefined,
           },
           raw: {

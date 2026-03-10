@@ -4,7 +4,6 @@ import {
   LanguageModelV3Content,
   LanguageModelV3FinishReason,
   LanguageModelV3StreamPart,
-  LanguageModelV3Usage,
   SharedV3Warning,
 } from "@ai-sdk/provider";
 import {
@@ -20,6 +19,7 @@ import {
 import { z } from "zod";
 import { convertToZhipuChatMessages } from "./convert-to-zhipu-chat-messages";
 import { mapZhipuFinishReason } from "./map-zhipu-finish-reason";
+import { computeTokenUsage, emptyUsage } from "./compute-token-usage";
 import { ZhipuChatModelId, ZhipuChatSettings } from "./zhipu-chat-settings";
 import { zhipuFailedResponseHandler } from "./zhipu-error";
 import { getResponseMetadata } from "./get-response-metadata";
@@ -60,10 +60,12 @@ export class ZhipuChatLanguageModel implements LanguageModelV3 {
     this.modelId = modelId.toLocaleLowerCase();
     this.settings = settings;
     this.config = config;
-    this.config.isMultiModel = this.modelId.includes("v");
+    // Vision model if model ID contains "v" (e.g. glm-4v, glm-4.5v, glm-4.1v-thinking)
+    this.config.isMultiModel = /\d+v/.test(this.modelId);
     // Model is a reasoning model if:
-    // 1. Model ID contains "z" or "thinking" (dedicated reasoning models)
-    // 2. Thinking mode is explicitly enabled via settings (GLM-4.5+ with thinking)
+    // 1. Model ID contains "z" (dedicated reasoning models like glm-z1-*)
+    // 2. Model ID contains "thinking" (vision reasoning models)
+    // 3. Thinking mode is explicitly enabled via settings (GLM-4.5+/4.7/5 with thinking)
     this.config.isReasoningModel =
       this.modelId.includes("z") ||
       this.modelId.includes("thinking") ||
@@ -199,7 +201,7 @@ export class ZhipuChatLanguageModel implements LanguageModelV3 {
       });
     }
 
-    if (toolChoice?.type !== "auto") {
+    if (toolChoice != null && toolChoice?.type !== "auto") {
       warnings.push({
         type: "unsupported",
         feature: "toolChoice",
@@ -344,24 +346,7 @@ export class ZhipuChatLanguageModel implements LanguageModelV3 {
     return {
       content,
       finishReason: mapZhipuFinishReason(choice.finish_reason),
-      usage: {
-        inputTokens: {
-          total: responseData.usage.prompt_tokens,
-          noCache: undefined,
-          cacheRead: undefined,
-          cacheWrite: undefined,
-        },
-        outputTokens: {
-          total: responseData.usage.completion_tokens ?? undefined,
-          text: undefined,
-          reasoning: undefined,
-        },
-        raw: {
-          prompt_tokens: responseData.usage.prompt_tokens,
-          completion_tokens: responseData.usage.completion_tokens ?? 0,
-          total_tokens: responseData.usage.total_tokens ?? 0,
-        },
-      },
+      usage: computeTokenUsage(responseData.usage),
       request: { body: fullArgs },
       response: {
         ...getResponseMetadata(responseData),
@@ -407,19 +392,7 @@ export class ZhipuChatLanguageModel implements LanguageModelV3 {
       unified: "other",
       raw: undefined,
     };
-    const usage: LanguageModelV3Usage = {
-      inputTokens: {
-        total: undefined,
-        noCache: undefined,
-        cacheRead: undefined,
-        cacheWrite: undefined,
-      },
-      outputTokens: {
-        total: undefined,
-        text: undefined,
-        reasoning: undefined,
-      },
-    };
+    let usage = emptyUsage();
     let isFirstChunk = true;
     let isActiveReasoning = false;
     let isActiveText = false;
@@ -472,15 +445,7 @@ export class ZhipuChatLanguageModel implements LanguageModelV3 {
             }
 
             if (value.usage != null) {
-              usage.inputTokens.total =
-                value.usage.prompt_tokens ?? undefined;
-              usage.outputTokens.total =
-                value.usage.completion_tokens ?? undefined;
-              usage.raw = {
-                prompt_tokens: value.usage.prompt_tokens ?? 0,
-                completion_tokens: value.usage.completion_tokens ?? 0,
-                total_tokens: value.usage.total_tokens ?? 0,
-              };
+              usage = computeTokenUsage(value.usage);
             }
 
             const choice = value.choices[0];
@@ -691,6 +656,16 @@ const zhipuChatResponseSchema = z.object({
     prompt_tokens: z.number(),
     completion_tokens: z.number().nullish(),
     total_tokens: z.number().nullish(),
+    prompt_tokens_details: z
+      .object({
+        cached_tokens: z.number().optional(),
+      })
+      .nullish(),
+    completion_tokens_details: z
+      .object({
+        reasoning_tokens: z.number().optional(),
+      })
+      .nullish(),
   }),
   web_search: z
     .object({
@@ -735,6 +710,16 @@ const zhipuChatChunkSchema = z.object({
       prompt_tokens: z.number(),
       completion_tokens: z.number().nullish(),
       total_tokens: z.number().nullish(),
+      prompt_tokens_details: z
+        .object({
+          cached_tokens: z.number().optional(),
+        })
+        .nullish(),
+      completion_tokens_details: z
+        .object({
+          reasoning_tokens: z.number().optional(),
+        })
+        .nullish(),
     })
     .nullish(),
   web_search: z
