@@ -58,7 +58,9 @@ describe("createZhipu", () => {
     expect(() => {
       // @ts-expect-error - testing new keyword error
       new provider("glm-4-flash");
-    }).toThrow("The Zhipu model function cannot be called with the new keyword.");
+    }).toThrow(
+      "The Zhipu model function cannot be called with the new keyword.",
+    );
   });
 
   it("should lowercase model IDs for chat models", () => {
@@ -78,7 +80,9 @@ describe("createZhipu", () => {
     const model = provider.chat("glm-4.7", {
       thinking: { type: "enabled" },
     });
-    expect((model as ZhipuChatLanguageModel).settings.thinking).toStrictEqual({ type: "enabled" });
+    expect((model as ZhipuChatLanguageModel).settings.thinking).toStrictEqual({
+      type: "enabled",
+    });
   });
 
   it("should use default baseURL when not provided", () => {

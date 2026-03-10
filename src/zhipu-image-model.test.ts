@@ -75,7 +75,10 @@ describe("ZhipuImageModel", () => {
   it("should pass model and prompt in request body", async () => {
     prepareJsonResponse();
 
-    await model.doGenerate({ ...BASE_OPTIONS, prompt: "A landscape with mountains" });
+    await model.doGenerate({
+      ...BASE_OPTIONS,
+      prompt: "A landscape with mountains",
+    });
 
     const calls =
       server.urls["https://open.bigmodel.cn/api/paas/v4/images/generations"]
@@ -104,7 +107,11 @@ describe("ZhipuImageModel", () => {
   it("should warn when n > 1", async () => {
     prepareJsonResponse();
 
-    const result = await model.doGenerate({ ...BASE_OPTIONS, prompt: "Test", n: 4 });
+    const result = await model.doGenerate({
+      ...BASE_OPTIONS,
+      prompt: "Test",
+      n: 4,
+    });
 
     expect(result.warnings).toContainEqual({
       type: "unsupported",
@@ -116,20 +123,27 @@ describe("ZhipuImageModel", () => {
   it("should warn when aspectRatio is provided", async () => {
     prepareJsonResponse();
 
-    const result = await model.doGenerate({ ...BASE_OPTIONS, prompt: "Test", aspectRatio: "16:9" });
+    const result = await model.doGenerate({
+      ...BASE_OPTIONS,
+      prompt: "Test",
+      aspectRatio: "16:9",
+    });
 
     expect(result.warnings).toContainEqual({
       type: "unsupported",
       feature: "aspectRatio",
-      details:
-        "This model does not support aspect ratio. Use `size` instead.",
+      details: "This model does not support aspect ratio. Use `size` instead.",
     });
   });
 
   it("should warn when seed is provided", async () => {
     prepareJsonResponse();
 
-    const result = await model.doGenerate({ ...BASE_OPTIONS, prompt: "Test", seed: 42 });
+    const result = await model.doGenerate({
+      ...BASE_OPTIONS,
+      prompt: "Test",
+      seed: 42,
+    });
 
     expect(result.warnings).toContainEqual({
       type: "unsupported",

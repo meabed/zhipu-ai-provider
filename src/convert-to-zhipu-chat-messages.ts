@@ -1,6 +1,4 @@
-import {
-  LanguageModelV3Prompt,
-} from "@ai-sdk/provider";
+import { LanguageModelV3Prompt } from "@ai-sdk/provider";
 import { convertUint8ArrayToBase64 } from "@ai-sdk/provider-utils";
 import { ZhipuPrompt } from "./zhipu-chat-prompt";
 
@@ -164,8 +162,7 @@ export function convertToZhipuChatMessages(
       }
 
       default: {
-        const _exhaustiveCheck: never = role;
-        throw new Error(`Unsupported role: ${_exhaustiveCheck}`);
+        throw new Error(`Unsupported role: ${role}`);
       }
     }
   }

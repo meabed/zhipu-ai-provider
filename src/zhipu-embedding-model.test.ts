@@ -87,7 +87,8 @@ describe("doEmbed", () => {
 
     await model.doEmbed({ values: testValues });
 
-    const calls = server.urls["https://open.bigmodel.cn/api/paas/v4/embeddings"].calls;
+    const calls =
+      server.urls["https://open.bigmodel.cn/api/paas/v4/embeddings"].calls;
     expect(await calls[calls.length - 1].requestBodyJson).toStrictEqual({
       model: "embedding-3",
       input: testValues,
@@ -111,8 +112,12 @@ describe("doEmbed", () => {
       },
     });
 
-    const calls = server.urls["https://open.bigmodel.cn/api/paas/v4/embeddings"].calls;
-    const headers = calls[calls.length - 1].requestHeaders as Record<string, string>;
+    const calls =
+      server.urls["https://open.bigmodel.cn/api/paas/v4/embeddings"].calls;
+    const headers = calls[calls.length - 1].requestHeaders as Record<
+      string,
+      string
+    >;
     expect(headers.authorization).toBe("Bearer test-api-key");
     expect(headers["content-type"]).toBe("application/json");
     expect(headers["custom-provider-header"]).toBe("provider-header-value");

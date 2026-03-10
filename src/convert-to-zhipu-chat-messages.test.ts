@@ -465,7 +465,7 @@ describe("tool calls", () => {
             toolCallId: "call-1",
             toolName: "tool-1",
             result: "approved",
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
           } as any,
           {
             type: "tool-result",

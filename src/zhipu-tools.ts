@@ -21,7 +21,12 @@ export const webSearchArgsSchema = lazySchema(() =>
        * - `search_pro_quark`: Quark search
        */
       searchEngine: z
-        .enum(["search_std", "search_pro", "search_pro_sogou", "search_pro_quark"])
+        .enum([
+          "search_std",
+          "search_pro",
+          "search_pro_sogou",
+          "search_pro_quark",
+        ])
         .optional(),
       /**
        * Whether to perform search intent recognition before searching.
@@ -86,11 +91,20 @@ const webSearchToolFactory = createProviderToolFactoryWithOutputSchema<
     }>;
   },
   {
-    searchEngine?: "search_std" | "search_pro" | "search_pro_sogou" | "search_pro_quark";
+    searchEngine?:
+      | "search_std"
+      | "search_pro"
+      | "search_pro_sogou"
+      | "search_pro_quark";
     searchIntent?: boolean;
     count?: number;
     searchDomainFilter?: string;
-    searchRecencyFilter?: "oneDay" | "oneWeek" | "oneMonth" | "oneYear" | "noLimit";
+    searchRecencyFilter?:
+      | "oneDay"
+      | "oneWeek"
+      | "oneMonth"
+      | "oneYear"
+      | "noLimit";
     contentSize?: "medium" | "high";
   }
 >({

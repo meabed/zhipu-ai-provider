@@ -29,8 +29,7 @@ export function computeTokenUsage(
   const cacheReadTokens = usage.prompt_tokens_details?.cached_tokens ?? 0;
 
   // Use API-provided reasoning_tokens if available
-  let reasoningTokens =
-    usage.completion_tokens_details?.reasoning_tokens ?? 0;
+  let reasoningTokens = usage.completion_tokens_details?.reasoning_tokens ?? 0;
 
   // When the API doesn't provide reasoning_tokens but we saw reasoning
   // content in the stream, estimate the split using character ratios

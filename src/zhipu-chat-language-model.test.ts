@@ -277,7 +277,10 @@ describe("doGenerate", () => {
       prompt: TEST_PROMPT,
     });
 
-    expect(response.finishReason).toStrictEqual({ unified: "stop", raw: "stop" });
+    expect(response.finishReason).toStrictEqual({
+      unified: "stop",
+      raw: "stop",
+    });
   });
 
   it("should support unknown finish reason", async () => {
@@ -290,7 +293,10 @@ describe("doGenerate", () => {
       prompt: TEST_PROMPT,
     });
 
-    expect(response.finishReason).toStrictEqual({ unified: "other", raw: "eos" });
+    expect(response.finishReason).toStrictEqual({
+      unified: "other",
+      raw: "eos",
+    });
   });
 
   it("should expose the raw response headers", async () => {
@@ -315,7 +321,9 @@ describe("doGenerate", () => {
       prompt: TEST_PROMPT,
     });
 
-    const calls = server.urls["https://open.bigmodel.cn/api/paas/v4/chat/completions"].calls;
+    const calls =
+      server.urls["https://open.bigmodel.cn/api/paas/v4/chat/completions"]
+        .calls;
     const body = calls[calls.length - 1].requestBodyJson as ZhipuRequestBody;
     expect(body.model).toBe("glm-4-flash");
     expect(body.messages).toEqual([{ role: "user", content: "Hello" }]);
@@ -332,7 +340,9 @@ describe("doGenerate", () => {
         prompt: TEST_PROMPT,
       });
 
-    const calls = server.urls["https://open.bigmodel.cn/api/paas/v4/chat/completions"].calls;
+    const calls =
+      server.urls["https://open.bigmodel.cn/api/paas/v4/chat/completions"]
+        .calls;
     const body = calls[calls.length - 1].requestBodyJson as ZhipuRequestBody;
     expect(body.model).toBe("glm-4-flash");
     expect(body.messages).toEqual([{ role: "user", content: "Hello" }]);
@@ -354,7 +364,9 @@ describe("doGenerate", () => {
         }),
       });
 
-    const calls = server.urls["https://open.bigmodel.cn/api/paas/v4/chat/completions"].calls;
+    const calls =
+      server.urls["https://open.bigmodel.cn/api/paas/v4/chat/completions"]
+        .calls;
     const body = calls[calls.length - 1].requestBodyJson as ZhipuRequestBody;
     expect(body.model).toBe("glm-4-flash");
     expect(body.messages).toEqual([{ role: "user", content: "Hello" }]);
@@ -387,7 +399,9 @@ describe("doGenerate", () => {
       prompt: TEST_PROMPT,
     });
 
-    const calls = server.urls["https://open.bigmodel.cn/api/paas/v4/chat/completions"].calls;
+    const calls =
+      server.urls["https://open.bigmodel.cn/api/paas/v4/chat/completions"]
+        .calls;
     const body = calls[calls.length - 1].requestBodyJson as ZhipuRequestBody;
     expect(body.model).toBe("glm-4-flash");
     expect(body.messages).toEqual([{ role: "user", content: "Hello" }]);
@@ -426,8 +440,13 @@ describe("doGenerate", () => {
       },
     });
 
-    const calls = server.urls["https://open.bigmodel.cn/api/paas/v4/chat/completions"].calls;
-    const headers = calls[calls.length - 1].requestHeaders as Record<string, string>;
+    const calls =
+      server.urls["https://open.bigmodel.cn/api/paas/v4/chat/completions"]
+        .calls;
+    const headers = calls[calls.length - 1].requestHeaders as Record<
+      string,
+      string
+    >;
     expect(headers.authorization).toBe(`Bearer ${TEST_API_KEY}`);
     expect(headers["content-type"]).toBe("application/json");
     expect(headers["custom-provider-header"]).toBe("provider-header-value");
@@ -492,7 +511,9 @@ describe("doGenerate", () => {
         responseFormat: { type: "text" },
       });
 
-      const calls = server.urls["https://open.bigmodel.cn/api/paas/v4/chat/completions"].calls;
+      const calls =
+        server.urls["https://open.bigmodel.cn/api/paas/v4/chat/completions"]
+          .calls;
       expect(calls[calls.length - 1].requestBodyJson).toMatchObject({
         model: "glm-4-flash",
         messages: [{ role: "user", content: "Hello" }],
@@ -509,8 +530,10 @@ describe("doGenerate", () => {
         responseFormat: { type: "json" },
       });
 
-      const calls = server.urls["https://open.bigmodel.cn/api/paas/v4/chat/completions"].calls;
-    const body = calls[calls.length - 1].requestBodyJson as ZhipuRequestBody;
+      const calls =
+        server.urls["https://open.bigmodel.cn/api/paas/v4/chat/completions"]
+          .calls;
+      const body = calls[calls.length - 1].requestBodyJson as ZhipuRequestBody;
       expect(body.model).toBe("glm-4-flash");
       expect(body.messages).toEqual([{ role: "user", content: "Hello" }]);
       expect(body.response_format).toEqual({ type: "json_object" });
@@ -533,7 +556,9 @@ describe("doGenerate", () => {
         },
       });
 
-      const calls = server.urls["https://open.bigmodel.cn/api/paas/v4/chat/completions"].calls;
+      const calls =
+        server.urls["https://open.bigmodel.cn/api/paas/v4/chat/completions"]
+          .calls;
       const body = calls[calls.length - 1].requestBodyJson as ZhipuRequestBody;
       expect(body.response_format).toEqual({ type: "json_object" });
 
@@ -542,7 +567,9 @@ describe("doGenerate", () => {
         expect.arrayContaining([
           expect.objectContaining({
             type: "other",
-            message: expect.stringContaining("does not support native JSON schema"),
+            message: expect.stringContaining(
+              "does not support native JSON schema",
+            ),
           }),
         ]),
       );
@@ -560,7 +587,9 @@ describe("doGenerate", () => {
         },
       });
 
-      const calls = server.urls["https://open.bigmodel.cn/api/paas/v4/chat/completions"].calls;
+      const calls =
+        server.urls["https://open.bigmodel.cn/api/paas/v4/chat/completions"]
+          .calls;
       const body = calls[calls.length - 1].requestBodyJson as ZhipuRequestBody;
       expect(body.response_format).toEqual({ type: "json_object" });
     });
@@ -1019,7 +1048,9 @@ describe("doStream", () => {
       prompt: TEST_PROMPT,
     });
 
-    const calls = server.urls["https://open.bigmodel.cn/api/paas/v4/chat/completions"].calls;
+    const calls =
+      server.urls["https://open.bigmodel.cn/api/paas/v4/chat/completions"]
+        .calls;
     const body = calls[calls.length - 1].requestBodyJson as ZhipuRequestBody;
     expect(body.stream).toBe(true);
     expect(body.model).toBe("glm-4-flash");
@@ -1037,7 +1068,9 @@ describe("doStream", () => {
       }),
     });
 
-    const calls = server.urls["https://open.bigmodel.cn/api/paas/v4/chat/completions"].calls;
+    const calls =
+      server.urls["https://open.bigmodel.cn/api/paas/v4/chat/completions"]
+        .calls;
     const body = calls[calls.length - 1].requestBodyJson as ZhipuRequestBody;
     expect(body.stream).toBe(true);
     expect(body.model).toBe("glm-4-flash");
@@ -1064,8 +1097,13 @@ describe("doStream", () => {
       },
     });
 
-    const calls = server.urls["https://open.bigmodel.cn/api/paas/v4/chat/completions"].calls;
-    const headers = calls[calls.length - 1].requestHeaders as Record<string, string>;
+    const calls =
+      server.urls["https://open.bigmodel.cn/api/paas/v4/chat/completions"]
+        .calls;
+    const headers = calls[calls.length - 1].requestHeaders as Record<
+      string,
+      string
+    >;
     expect(headers.authorization).toBe(`Bearer ${TEST_API_KEY}`);
     expect(headers["content-type"]).toBe("application/json");
     expect(headers["custom-provider-header"]).toBe("provider-header-value");

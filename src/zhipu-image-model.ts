@@ -52,7 +52,8 @@ export class ZhipuImageModel implements ImageModelV3 {
     const warnings: Array<SharedV3Warning> = [];
 
     // Read providerOptions directly — no nesting required
-    const zhipuProviderOptions = (providerOptions ?? {}) as ZhipuImageProviderOptions;
+    const zhipuProviderOptions = (providerOptions ??
+      {}) as ZhipuImageProviderOptions;
 
     if (n != null && n > 1) {
       warnings.push({

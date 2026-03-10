@@ -19,7 +19,11 @@ import { z } from "zod";
 import { convertToZhipuChatMessages } from "./convert-to-zhipu-chat-messages";
 import { mapZhipuFinishReason } from "./map-zhipu-finish-reason";
 import { computeTokenUsage, emptyUsage } from "./compute-token-usage";
-import { ZhipuChatModelId, ZhipuChatSettings, ZhipuProviderOptions } from "./zhipu-chat-settings";
+import {
+  ZhipuChatModelId,
+  ZhipuChatSettings,
+  ZhipuProviderOptions,
+} from "./zhipu-chat-settings";
 import { zhipuFailedResponseHandler } from "./zhipu-error";
 import { getResponseMetadata } from "./get-response-metadata";
 
@@ -166,8 +170,10 @@ export class ZhipuChatLanguageModel implements LanguageModelV3 {
     }
 
     // Separate function tools and provider tools
-    const functionTools = tools?.filter((tool) => tool.type === "function") ?? [];
-    const providerTools = tools?.filter((tool) => tool.type === "provider") ?? [];
+    const functionTools =
+      tools?.filter((tool) => tool.type === "function") ?? [];
+    const providerTools =
+      tools?.filter((tool) => tool.type === "provider") ?? [];
 
     // Check for unsupported provider tools
     for (const tool of providerTools) {
@@ -251,7 +257,8 @@ export class ZhipuChatLanguageModel implements LanguageModelV3 {
   ): Promise<Awaited<ReturnType<LanguageModelV3["doGenerate"]>>> {
     const { args, warnings } = this.getArgs(options);
 
-    const zhipuOptions = (options.providerOptions ?? {}) as ZhipuProviderOptions;
+    const zhipuOptions = (options.providerOptions ??
+      {}) as ZhipuProviderOptions;
 
     const fullArgs = {
       ...args,
@@ -339,7 +346,8 @@ export class ZhipuChatLanguageModel implements LanguageModelV3 {
   ): Promise<Awaited<ReturnType<LanguageModelV3["doStream"]>>> {
     const { args, warnings } = this.getArgs(options);
 
-    const zhipuOptions = (options.providerOptions ?? {}) as ZhipuProviderOptions;
+    const zhipuOptions = (options.providerOptions ??
+      {}) as ZhipuProviderOptions;
 
     const body = { ...args, ...zhipuOptions, stream: true };
 
