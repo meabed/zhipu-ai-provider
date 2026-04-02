@@ -1,6 +1,8 @@
 // https://docs.z.ai/api-reference/llm/chat-completion
 export type ZhipuChatModelId =
   // Flagship models
+  | "glm-5v-turbo"
+  | "glm-5-turbo"
   | "glm-5"
   // GLM-4.7 series
   | "glm-4.7"
@@ -23,6 +25,7 @@ export type ZhipuChatModelId =
   | "glm-4-flash"
   | "glm-4-flash-250414"
   | "glm-4-flashx"
+  | "glm-4-flashx-250414"
   | "glm-4-32b-0414-128k"
   // Vision/Video Models
   | "glm-4v-plus-0111"
@@ -35,10 +38,14 @@ export type ZhipuChatModelId =
   | "glm-4.6v-flashx"
   // Vision models (4.5)
   | "glm-4.5v"
+  // Specialized Vision Models
+  | "glm-ocr"
+  | "autoglm-phone-multilingual"
   // Reasoning Models
   | "glm-z1-air"
   | "glm-z1-airx"
   | "glm-z1-flash"
+  | "glm-z1-flashx"
   // Vision Reasoning Models
   | "glm-4.1v-thinking-flash"
   | "glm-4.1v-thinking-flashx"

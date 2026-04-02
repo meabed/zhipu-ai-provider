@@ -5,6 +5,7 @@ export type ZhipuImageModelId =
   | "cogview-3-flash"
   | "cogview-4"
   | "cogview-4-250304"
+  | "glm-image"
   | (string & {});
 
 const sizeSchema = z

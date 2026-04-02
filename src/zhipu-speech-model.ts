@@ -11,7 +11,11 @@ import {
  * Zhipu TTS model IDs.
  * @see https://docs.bigmodel.cn/cn/guide/models/sound-and-video/glm-tts
  */
-export type ZhipuSpeechModelId = "glm-tts" | (string & {});
+export type ZhipuSpeechModelId =
+  | "glm-tts"
+  | "glm-4-voice"
+  | "glm-realtime"
+  | (string & {});
 
 export interface ZhipuSpeechSettings {
   /**
