@@ -3,7 +3,7 @@
 [Zhipu AI](https://www.zhipuai.cn/) provider for the [Vercel AI SDK](https://sdk.vercel.ai/). Integrates **GLM** language models, embedding models, image generation, and text-to-speech from [bigmodel.cn](https://bigmodel.cn/).
 
 [![npm version](https://img.shields.io/npm/v/zhipu-ai-sdk-provider.svg)](https://www.npmjs.com/package/zhipu-ai-sdk-provider)
-[![license](https://img.shields.io/npm/l/zhipu-ai-sdk-provider.svg)](https://github.com/meabed/zhipu-ai-provider/blob/master/LICENSE.md)
+[![license](https://img.shields.io/npm/l/zhipu-ai-sdk-provider.svg)](https://github.com/meabed/zhipu-ai-sdk-provider/blob/master/LICENSE.md)
 
 ## Installation
 
@@ -566,7 +566,7 @@ import {
 - [Thinking Mode Docs](https://docs.z.ai/guides/capabilities/thinking)
 - [Web Search API](https://docs.bigmodel.cn/api-reference/工具-api/网络搜索)
 - [Vercel AI SDK Docs](https://sdk.vercel.ai/docs/introduction)
-- [GitHub Repository](https://github.com/meabed/zhipu-ai-provider)
+- [GitHub Repository](https://github.com/meabed/zhipu-ai-sdk-provider)
 
 ## License
 
